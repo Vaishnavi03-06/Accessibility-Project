@@ -13,25 +13,215 @@
   --green:#4a9a6a;--red:#c04040;
   --skin:#c68642;--skin-dark:#a0622a;--skin-light:#e8a870;
 }
-body{background:var(--bg);color:var(--light);font-family:'DM Sans',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+body{background:var(--bg);color:var(--light);font-family:'DM Sans',sans-serif;height:100vh;overflow:hidden;position:relative;}
 
-/* Header */
+/* ══════════════════════════════════════════
+   SCREEN 1 — LANDING
+══════════════════════════════════════════ */
+#screen-landing{
+  position:fixed;inset:0;z-index:100;
+  background:var(--bg);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  transition:opacity .6s;
+}
+
+/* Subtle radial glow behind avatar */
+#screen-landing::before{
+  content:'';position:absolute;
+  width:520px;height:520px;border-radius:50%;
+  background:radial-gradient(circle,rgba(200,144,42,.08) 0%,transparent 70%);
+  pointer-events:none;
+  animation:glow-pulse 4s ease-in-out infinite;
+}
+@keyframes glow-pulse{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.1);opacity:1}}
+
+.landing-inner{
+  display:flex;align-items:center;gap:56px;
+  padding:32px;position:relative;z-index:1;
+}
+
+/* Avatar side */
+.landing-avatar-col{display:flex;flex-direction:column;align-items:center;gap:16px;}
+.landing-avatar-wrap{
+  width:310px;height:400px;flex-shrink:0;
+  border-radius:20px;overflow:hidden;
+  border:1px solid var(--border);
+  background:#120e06;
+  box-shadow:0 0 40px rgba(200,144,42,.12),0 0 80px rgba(0,0,0,.6);
+  position:relative;
+}
+#three-canvas{display:block;width:100%;height:100%;}
+.avatar-caption{
+  font-family:'DM Mono',monospace;font-size:10px;
+  color:var(--muted);letter-spacing:1.5px;text-align:center;
+}
+.sign-badge{
+  display:flex;align-items:center;gap:6px;
+  font-family:'DM Mono',monospace;font-size:10px;
+  color:var(--gold);padding:4px 12px;
+  border:1px solid rgba(200,144,42,.3);border-radius:20px;
+  background:rgba(200,144,42,.06);
+  transition:all .3s;min-width:120px;justify-content:center;
+}
+.sign-badge-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Info / upload side */
+.landing-info{display:flex;flex-direction:column;gap:28px;max-width:400px;}
+.landing-eyebrow{
+  font-family:'DM Mono',monospace;font-size:10px;
+  color:var(--gold);letter-spacing:3px;text-transform:uppercase;
+}
+.landing-headline{
+  font-size:38px;font-weight:300;color:var(--light);
+  line-height:1.25;
+}
+.landing-headline strong{font-weight:500;color:var(--gold);}
+.landing-body{font-size:13px;color:var(--muted);line-height:1.7;}
+
+/* Drop zone */
+.landing-drop{
+  border:2px dashed var(--border);border-radius:14px;
+  padding:28px 24px;text-align:center;cursor:pointer;
+  transition:border-color .2s, background .2s, box-shadow .2s;
+  position:relative;
+}
+.landing-drop:hover,.landing-drop.drag-over{
+  border-color:var(--gold);
+  background:rgba(200,144,42,.04);
+  box-shadow:0 0 24px rgba(200,144,42,.12);
+}
+.landing-drop input{display:none;}
+.drop-icon{font-size:32px;margin-bottom:10px;opacity:.7;}
+.drop-main{font-size:14px;color:var(--light);margin-bottom:6px;}
+.drop-hint{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
+.drop-cta{
+  display:inline-block;margin-top:18px;
+  padding:10px 30px;border-radius:8px;
+  background:var(--gold);color:#1a1208;
+  font-family:'DM Mono',monospace;font-size:11px;font-weight:500;
+  letter-spacing:1px;cursor:pointer;
+  transition:box-shadow .2s;
+}
+.drop-cta:hover{box-shadow:0 0 20px rgba(200,144,42,.5);}
+
+/* JSON fallback link */
+.json-link{
+  font-family:'DM Mono',monospace;font-size:10px;color:#4a3a1a;
+  text-align:center;cursor:pointer;
+  transition:color .2s;
+}
+.json-link:hover{color:var(--muted);}
+
+/* Server status badge on landing */
+.server-badge{
+  display:flex;align-items:center;gap:7px;
+  font-family:'DM Mono',monospace;font-size:10px;
+  padding:5px 14px;border-radius:20px;
+  border:1px solid var(--border);color:var(--muted);
+  transition:all .4s;
+}
+.server-badge.ok{border-color:rgba(74,154,106,.4);color:var(--green);}
+.server-badge.err{border-color:rgba(192,64,64,.4);color:var(--red);}
+.server-badge-dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+
+/* Processing error area */
+.proc-error{
+  background:#2a1010;border:1px solid var(--red);
+  border-radius:10px;padding:16px 20px;min-width:340px;
+  display:none;
+}
+.proc-error-title{
+  font-family:'DM Mono',monospace;font-size:10px;
+  color:var(--red);letter-spacing:1px;margin-bottom:8px;
+}
+.proc-error-msg{
+  font-size:12px;color:#e08080;line-height:1.6;
+  word-break:break-all;margin-bottom:14px;
+}
+.proc-error-hint{
+  font-family:'DM Mono',monospace;font-size:10px;
+  color:#8a4a4a;margin-bottom:14px;line-height:1.6;
+}
+.proc-retry-btn{
+  display:inline-block;padding:7px 20px;border-radius:7px;
+  background:transparent;border:1px solid var(--red);
+  color:var(--red);font-family:'DM Mono',monospace;font-size:10px;
+  cursor:pointer;letter-spacing:.5px;transition:all .15s;
+}
+.proc-retry-btn:hover{background:var(--red);color:#1a1208;}
+
+/* ══════════════════════════════════════════
+   SCREEN 2 — PROCESSING
+══════════════════════════════════════════ */
+#screen-processing{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(26,18,8,.96);
+  backdrop-filter:blur(4px);
+  display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:28px;
+}
+.proc-eyebrow{
+  font-family:'DM Mono',monospace;font-size:10px;
+  color:var(--gold);letter-spacing:3px;
+}
+.proc-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:28px 36px;min-width:340px;
+  box-shadow:0 8px 40px rgba(0,0,0,.5);
+}
+.proc-file-label{
+  font-family:'DM Mono',monospace;font-size:11px;
+  color:var(--muted);margin-bottom:22px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.pstep{
+  display:flex;align-items:center;gap:12px;
+  padding:9px 0;
+  font-family:'DM Mono',monospace;font-size:11px;
+  color:#3a2e1a;border-bottom:1px solid #2a2010;
+  transition:color .3s;
+}
+.pstep:last-child{border-bottom:none;}
+.pstep.active{color:var(--light);}
+.pstep.done{color:var(--green);}
+.pstep.err{color:var(--red);}
+.picon{width:18px;text-align:center;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinning{display:inline-block;animation:spin .9s linear infinite;}
+.proc-note{
+  font-family:'DM Mono',monospace;font-size:10px;
+  color:#4a3a1a;text-align:center;
+}
+
+/* ══════════════════════════════════════════
+   SCREEN 3 — PLAYER
+══════════════════════════════════════════ */
+#screen-player{
+  display:none;flex-direction:column;height:100vh;opacity:0;
+  transition:opacity .5s;
+}
 header{
   display:flex;align-items:center;justify-content:space-between;
   padding:12px 24px;border-bottom:1px solid var(--border);
   background:var(--surface);flex-shrink:0;
 }
 .logo{font-family:'DM Mono',monospace;font-size:12px;color:var(--gold);letter-spacing:2px;}
+.hdr-right{display:flex;align-items:center;gap:16px;}
 .status{display:flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
 .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s infinite;}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.back-btn{
+  font-family:'DM Mono',monospace;font-size:10px;
+  color:var(--muted);background:transparent;
+  border:1px solid var(--border);border-radius:6px;
+  padding:5px 12px;cursor:pointer;transition:all .15s;
+}
+.back-btn:hover{color:var(--light);border-color:var(--muted);}
 
-/* Main layout */
 .main{display:flex;flex:1;overflow:hidden;}
-
-/* Canvas area */
 .canvas-wrap{flex:1;position:relative;}
-#three-canvas{display:block;width:100%;height:100%;}
+.player-canvas{display:block;width:100%;height:100%;}
 
 /* Side panel */
 .side{
@@ -39,17 +229,6 @@ header{
   background:var(--surface);border-left:1px solid var(--border);
   display:flex;flex-direction:column;overflow:hidden;
 }
-
-/* Upload */
-.upload{
-  padding:16px;border-bottom:1px solid var(--border);
-  text-align:center;cursor:pointer;transition:background .2s;
-}
-.upload:hover{background:#2a2010;}
-.upload input{display:none;}
-.upload-label{font-size:13px;color:var(--muted);}
-.upload-label span{color:var(--gold);}
-.upload-hint{font-family:'DM Mono',monospace;font-size:10px;color:#4a3a1a;margin-top:4px;}
 
 /* Current sign display */
 .sign-display{
@@ -107,63 +286,210 @@ button:disabled{opacity:.3;cursor:default;}
 .seg-en{font-size:11px;color:#8a7a5a;margin-bottom:2px;}
 .seg-gl{font-family:'DM Mono',monospace;font-size:11px;color:var(--gold);letter-spacing:.5px;}
 
-/* Overlay info */
+/* Player overlay (bottom-left info) */
 .overlay{position:absolute;bottom:16px;left:16px;font-family:'DM Mono',monospace;font-size:10px;color:rgba(200,144,42,.5);}
+
+/* JSON modal */
+#json-modal{
+  position:fixed;inset:0;z-index:300;
+  background:rgba(26,18,8,.8);backdrop-filter:blur(4px);
+  display:none;align-items:center;justify-content:center;
+}
+.json-modal-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:14px;padding:28px;width:340px;
+}
+.json-modal-title{font-family:'DM Mono',monospace;font-size:11px;color:var(--gold);letter-spacing:2px;margin-bottom:16px;}
+.json-modal-hint{font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.6;}
+.json-modal-actions{display:flex;gap:10px;justify-content:flex-end;}
 </style>
 </head>
 <body>
 
-<header>
-  <div class="logo">ISL · 3D AVATAR RENDERER</div>
-  <div class="status"><div class="dot"></div>THREE.JS · WEBGL</div>
-</header>
+<!-- ════════════════════════════════════════════════════════════
+     SCREEN 1 — LANDING
+════════════════════════════════════════════════════════════ -->
+<div id="screen-landing">
+  <div class="landing-inner">
 
-<div class="main">
-  <div class="canvas-wrap">
-    <canvas id="three-canvas"></canvas>
-    <div class="overlay" id="overlay">Load gloss_output.json to begin</div>
+    <!-- Left: live 3D avatar with welcome sign sequence -->
+    <div class="landing-avatar-col">
+      <div class="landing-avatar-wrap">
+        <canvas id="three-canvas"></canvas>
+      </div>
+      <div class="sign-badge">
+        <div class="sign-badge-dot"></div>
+        <span id="landing-sign-label">HELLO</span>
+      </div>
+      <div class="avatar-caption">LIVE · ISL AVATAR · 3D</div>
+    </div>
+
+    <!-- Right: title + upload zone -->
+    <div class="landing-info">
+      <div>
+        <div class="landing-eyebrow">ISL · Avatar · Renderer</div>
+        <div class="landing-headline">
+          Sign language<br>from your <strong>lecture</strong>
+        </div>
+      </div>
+      <div class="landing-body">
+        Upload a lecture video and the AI will transcribe the speech,
+        convert it to Indian Sign Language gloss, and animate the
+        avatar — all in your browser.
+      </div>
+
+      <div class="landing-drop" id="landing-drop"
+           ondragover="handleDragOver(event)"
+           ondragleave="handleDragLeave(event)"
+           ondrop="handleDrop(event)"
+           onclick="document.getElementById('fv-landing').click()">
+        <input type="file" id="fv-landing" accept="video/*" onchange="processVideoEvent(event)"/>
+        <div class="drop-icon">🎬</div>
+        <div class="drop-main">Drop your lecture video here</div>
+        <div class="drop-hint">mp4 · mov · webm · avi &nbsp;·&nbsp; up to 500 MB</div>
+        <div class="drop-cta">Browse files</div>
+      </div>
+
+      <div class="json-link" onclick="openJsonModal()">
+        Already have gloss_output.json? Load it directly →
+      </div>
+
+      <div style="display:flex;justify-content:center;">
+        <div class="server-badge" id="server-badge">
+          <span class="server-badge-dot"></span>
+          <span id="server-badge-label">Checking backend…</span>
+        </div>
+      </div>
+    </div>
+
   </div>
+</div>
 
-  <div class="side">
-    <div class="upload" onclick="document.getElementById('fi').click()">
-      <input type="file" id="fi" accept=".json" onchange="loadFile(event)"/>
-      <div class="upload-label">Click to load <span>gloss_output.json</span></div>
-      <div class="upload-hint">nlp / gloss_output.json</div>
+<!-- ════════════════════════════════════════════════════════════
+     SCREEN 2 — PROCESSING
+════════════════════════════════════════════════════════════ -->
+<div id="screen-processing">
+  <div class="proc-eyebrow">ISL · Avatar · Processing</div>
+  <div class="proc-card">
+    <div class="proc-file-label" id="proc-filename">—</div>
+    <div class="pstep" id="pstep-upload">
+      <span class="picon" id="picon-upload">○</span>Uploading video to server
+    </div>
+    <div class="pstep" id="pstep-audio">
+      <span class="picon" id="picon-audio">○</span>Extracting audio track (ffmpeg)
+    </div>
+    <div class="pstep" id="pstep-asr">
+      <span class="picon" id="picon-asr">○</span>Transcribing speech (Whisper)
+    </div>
+    <div class="pstep" id="pstep-gloss">
+      <span class="picon" id="picon-gloss">○</span>Converting to ISL gloss
+    </div>
+  </div>
+  <div class="proc-note">This may take 30–90 seconds depending on video length.</div>
+
+  <div class="proc-error" id="proc-error">
+    <div class="proc-error-title">✗ Processing failed</div>
+    <div class="proc-error-msg" id="proc-error-msg"></div>
+    <div class="proc-error-hint" id="proc-error-hint"></div>
+    <button class="proc-retry-btn" onclick="window.location.reload()">↺ Go back and retry</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     SCREEN 3 — PLAYER
+════════════════════════════════════════════════════════════ -->
+<div id="screen-player">
+  <header>
+    <div class="logo">ISL · 3D AVATAR RENDERER</div>
+    <div class="hdr-right">
+      <div class="status"><div class="dot"></div>THREE.JS · WEBGL</div>
+      <button class="back-btn" onclick="goBack()">← New video</button>
+    </div>
+  </header>
+
+  <div class="main">
+    <div class="canvas-wrap" id="player-canvas-wrap">
+      <!-- three-canvas moves here on transition -->
+      <div class="overlay" id="overlay"></div>
     </div>
 
-    <div class="sign-display">
-      <div class="sign-word" id="sw">—</div>
-      <div class="sign-english" id="se">Press Play to start</div>
-      <div class="sign-details" id="sd"></div>
-    </div>
-
-    <div class="controls">
-      <div class="prog-row"><span id="tc">0.0s</span><span id="tt">0.0s</span></div>
-      <div class="prog-bg"><div class="prog-bar" id="pb"></div></div>
-      <div class="btn-row">
-        <button id="btn-play" onclick="play()">▶ PLAY</button>
-        <button id="btn-pause" onclick="pause()" disabled>⏸</button>
-        <button id="btn-reset" onclick="reset()">↺</button>
+    <div class="side">
+      <div class="sign-display">
+        <div class="sign-word" id="sw">—</div>
+        <div class="sign-english" id="se">Press Play to start</div>
+        <div class="sign-details" id="sd"></div>
       </div>
-      <div class="spd-row">
-        SPD <input type="range" min="0.25" max="2" step="0.25" value="1" oninput="setSpd(this.value)"/>
-        <span class="spd-val" id="sl">1×</span>
-      </div>
-    </div>
 
-    <div class="seg-head">Segments</div>
-    <div class="seg-list" id="slist"></div>
+      <div class="controls">
+        <div class="prog-row"><span id="tc">0.0s</span><span id="tt">0.0s</span></div>
+        <div class="prog-bg"><div class="prog-bar" id="pb"></div></div>
+        <div class="btn-row">
+          <button id="btn-play" onclick="play()" disabled>▶ PLAY</button>
+          <button id="btn-pause" onclick="pause()" disabled>⏸</button>
+          <button id="btn-reset" onclick="reset()">↺</button>
+        </div>
+        <div class="spd-row">
+          SPD <input type="range" min="0.25" max="2" step="0.25" value="1" oninput="setSpd(this.value)"/>
+          <span class="spd-val" id="sl">1×</span>
+        </div>
+      </div>
+
+      <div class="seg-head">Segments</div>
+      <div class="seg-list" id="slist"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     JSON MODAL (fallback)
+════════════════════════════════════════════════════════════ -->
+<div id="json-modal" onclick="closeJsonModal()">
+  <div class="json-modal-card" onclick="event.stopPropagation()">
+    <div class="json-modal-title">Load JSON directly</div>
+    <div class="json-modal-hint">
+      Select the <code style="color:var(--gold);font-size:11px">nlp/gloss_output.json</code>
+      file generated by the Python pipeline.
+    </div>
+    <input type="file" id="fi-json" accept=".json" onchange="loadFile(event)" style="display:none"/>
+    <div class="json-modal-actions">
+      <button onclick="closeJsonModal()" style="font-size:11px">Cancel</button>
+      <button onclick="document.getElementById('fi-json').click()"
+              style="background:var(--gold);color:#1a1208;border-color:var(--gold);font-size:11px">
+        Browse JSON
+      </button>
+    </div>
   </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+// Catch the most common mistake: opening the HTML as a local file instead of
+// going through Flask. Relative fetch calls don't work on file:// URLs.
+if(location.protocol === 'file:'){
+  document.body.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:center;height:100vh;
+                font-family:monospace;font-size:13px;color:#f5e6c8;background:#1a1208;
+                flex-direction:column;gap:20px;text-align:center;padding:40px;">
+      <div style="font-size:28px;color:#c8902a;">⚠</div>
+      <div style="color:#c8902a;letter-spacing:2px;font-size:11px;">WRONG URL</div>
+      <div>You opened this file directly.<br>The backend API won't work from <code style="color:#c8902a">file://</code></div>
+      <div style="background:#221a0e;border:1px solid #3a2e1a;border-radius:8px;padding:16px 24px;">
+        <div style="color:#8a7a5a;font-size:10px;margin-bottom:8px;">Run this in your terminal:</div>
+        <code style="color:#c8902a">python3.12 app.py</code>
+        <div style="color:#8a7a5a;font-size:10px;margin-top:12px;">Then open in your browser:</div>
+        <code style="color:#c8902a">http://localhost:8000</code>
+      </div>
+    </div>`;
+}
+</script>
+<script>
 // ═══════════════════════════════════════════════════════════════
 // THREE.JS SCENE SETUP
+// The canvas starts inside #landing-avatar-wrap and is moved to
+// #player-canvas-wrap when the user transitions to the player.
 // ═══════════════════════════════════════════════════════════════
 
 const canvas = document.getElementById('three-canvas');
-const wrap   = canvas.parentElement;
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
 renderer.shadowMap.enabled = true;
@@ -179,9 +505,12 @@ const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
 camera.position.set(0, 0.85, 2.8);
 camera.lookAt(0, 0.45, 0);
 
-// Resize handler
+// Resize: always reads from canvas's current parent
 function resize(){
-  const w = wrap.clientWidth, h = wrap.clientHeight;
+  const parent = canvas.parentElement;
+  if(!parent) return;
+  const w = parent.clientWidth, h = parent.clientHeight;
+  if(w===0 || h===0) return;
   renderer.setSize(w, h);
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
@@ -226,13 +555,13 @@ const eyeMat = new THREE.MeshStandardMaterial({
 const whiteMat = new THREE.MeshStandardMaterial({
   color: 0xf0e8e0, roughness: 0.8,
 });
-const nailMat = new THREE.MeshStandardMaterial({
+const skinDarkMat2 = new THREE.MeshStandardMaterial({
   color: 0xd4956a, roughness: 0.4, metalness: 0.1,
 });
 
-// ── Helper: create rounded box ─────────────────────────────────
+// ── Helper: geometry builders ──────────────────────────────────
 function box(w,h,d,mat){
-  const g = new THREE.CylinderGeometry ? new THREE.BoxGeometry(w,h,d,2,2,2) : new THREE.BoxGeometry(w,h,d);
+  const g = new THREE.BoxGeometry(w,h,d,2,2,2);
   return new THREE.Mesh(g, mat);
 }
 function sphere(r,mat,ws=16,hs=12){
@@ -257,12 +586,10 @@ const torsoMesh = cyl(0.22,0.26,0.7,clothMat,12);
 torsoMesh.position.y = 0.35;
 torso.add(torsoMesh);
 
-// Shirt collar
 const collar = cyl(0.14,0.16,0.12,clothMat,12);
 collar.position.y = 0.74;
 torso.add(collar);
 
-// Shoulders
 [-1,1].forEach(side=>{
   const sh = cyl(0.09,0.11,0.18,clothMat,8);
   sh.rotation.z = side * Math.PI/2;
@@ -275,7 +602,6 @@ const head = new THREE.Group();
 head.position.y = 1.02;
 avatar.add(head);
 
-// Head shape
 const headMesh = new THREE.Mesh(
   new THREE.SphereGeometry(0.22, 20, 16),
   skinMat
@@ -283,7 +609,6 @@ const headMesh = new THREE.Mesh(
 headMesh.scale.set(1, 1.15, 0.95);
 head.add(headMesh);
 
-// Hair
 const hairTop = new THREE.Mesh(
   new THREE.SphereGeometry(0.225, 20, 12, 0, Math.PI*2, 0, Math.PI*0.55),
   hairMat
@@ -291,7 +616,6 @@ const hairTop = new THREE.Mesh(
 hairTop.position.y = 0.04;
 head.add(hairTop);
 
-// Hair sides
 [-1,1].forEach(s=>{
   const hs = new THREE.Mesh(new THREE.SphereGeometry(0.15,10,8), hairMat);
   hs.scale.set(0.5,0.9,0.6);
@@ -299,7 +623,6 @@ head.add(hairTop);
   head.add(hs);
 });
 
-// Eyes
 [-1,1].forEach(side=>{
   const eyeWhite = sphere(0.045, whiteMat);
   eyeWhite.position.set(side*0.085, 0.04, 0.19);
@@ -307,25 +630,21 @@ head.add(hairTop);
   const iris = sphere(0.028, eyeMat);
   iris.position.set(side*0.085, 0.04, 0.225);
   head.add(iris);
-  // Eyebrow
   const brow = box(0.07,0.012,0.01,hairMat);
   brow.position.set(side*0.085, 0.095, 0.2);
   brow.rotation.z = side * -0.15;
   head.add(brow);
 });
 
-// Nose
 const nose = new THREE.Mesh(new THREE.SphereGeometry(0.03,8,6), skinMat);
 nose.scale.set(0.8,0.7,1.2);
 nose.position.set(0, -0.02, 0.215);
 head.add(nose);
 
-// Mouth
 const mouth = box(0.07,0.015,0.01,skinDarkMat);
 mouth.position.set(0,-0.07,0.215);
 head.add(mouth);
 
-// Ears
 [-1,1].forEach(side=>{
   const ear = new THREE.Mesh(new THREE.SphereGeometry(0.04,8,6), skinMat);
   ear.scale.set(0.5,0.9,0.6);
@@ -333,19 +652,15 @@ head.add(mouth);
   head.add(ear);
 });
 
-// Neck
 const neck = cyl(0.08,0.09,0.16,skinMat,10);
 neck.position.y = 0.82;
 avatar.add(neck);
 
 // ── Arms ──────────────────────────────────────────────────────
-// We'll build full arm rigs with bones for animation
-
 function buildArm(side){
   const arm = new THREE.Group();
   const sign = side === 'R' ? 1 : -1;
 
-  // Upper arm
   const upperArm = new THREE.Group();
   upperArm.position.set(sign*0.32, 0.68, 0);
   arm.add(upperArm);
@@ -354,7 +669,6 @@ function buildArm(side){
   uArmMesh.position.y = -0.16;
   upperArm.add(uArmMesh);
 
-  // Forearm
   const foreArm = new THREE.Group();
   foreArm.position.y = -0.32;
   upperArm.add(foreArm);
@@ -363,24 +677,20 @@ function buildArm(side){
   fArmMesh.position.y = -0.15;
   foreArm.add(fArmMesh);
 
-  // Wrist/hand base
   const hand = new THREE.Group();
   hand.position.y = -0.30;
   foreArm.add(hand);
 
-  // Palm
   const palm = box(0.13,0.13,0.055,skinMat);
   palm.position.y = -0.065;
   hand.add(palm);
 
-  // Thumb
   const thumb = buildFinger(0.032,0.026,0.072,0.062);
   thumb.position.set(sign*0.068,-0.02,0);
   thumb.rotation.z = sign * 1.1;
   thumb.rotation.x = -0.3;
   hand.add(thumb);
 
-  // 4 Fingers
   const fpos = [-0.045,-0.015,0.015,0.044];
   const flen = [0.115,0.130,0.122,0.100];
   const fingers = fpos.map((x,i)=>{
@@ -396,18 +706,15 @@ function buildArm(side){
 function buildFinger(r1,r2,seg1Len,seg2Len){
   const finger = new THREE.Group();
 
-  // Proximal phalanx
   const p1 = new THREE.Group();
   const p1mesh = cyl(r1,r2,seg1Len,6);
   p1mesh.material = skinMat;
   p1mesh.position.y = -seg1Len/2;
   p1.add(p1mesh);
-  // Knuckle
   const k1 = sphere(r1*1.05, skinDarkMat, 6, 4);
   p1.add(k1);
   finger.add(p1);
 
-  // Middle phalanx
   const p2 = new THREE.Group();
   p2.position.y = -seg1Len;
   const p2mesh = cyl(r2,r2*0.9,seg2Len*0.55,6);
@@ -418,14 +725,12 @@ function buildFinger(r1,r2,seg1Len,seg2Len){
   p2.add(k2);
   p1.add(p2);
 
-  // Distal phalanx
   const p3 = new THREE.Group();
   p3.position.y = -seg2Len*0.55;
   const p3mesh = cyl(r2*0.9,r2*0.7,seg2Len*0.45,6);
   p3mesh.material = skinMat;
   p3mesh.position.y = -seg2Len*0.225;
   p3.add(p3mesh);
-  // Fingertip
   const tip = sphere(r2*0.75, skinMat, 6, 4);
   tip.position.y = -seg2Len*0.45;
   p3.add(tip);
@@ -443,12 +748,9 @@ const leftArm  = buildArm('L');
 avatar.add(rightArm.group);
 avatar.add(leftArm.group);
 
-// Position arms
 rightArm.group.position.set(0,0,0);
 leftArm.group.position.set(0,0,0);
 
-// KEY FIX: negative rotation.x sends arm toward +Z (toward camera)
-// neutral raised to -0.85/-0.95 so both hands sit at mid-chest level
 function setRestPose(){
   rightArm.upperArm.rotation.z = -0.50;
   rightArm.upperArm.rotation.x = -0.85;
@@ -462,7 +764,7 @@ function setRestPose(){
   setFingers(leftArm,  [0.5,0.5,0.5,0.5,0.5]);
 }
 
-// ── Ground plane ───────────────────────────────────────────────
+// ── Ground ─────────────────────────────────────────────────────
 const ground = new THREE.Mesh(
   new THREE.PlaneGeometry(10,10),
   new THREE.MeshStandardMaterial({color:0x120e06, roughness:1})
@@ -472,7 +774,6 @@ ground.position.y = -0.5;
 ground.receiveShadow = true;
 scene.add(ground);
 
-// Subtle background gradient plane
 const bgPlane = new THREE.Mesh(
   new THREE.PlaneGeometry(8,6),
   new THREE.MeshBasicMaterial({color:0x221608})
@@ -487,13 +788,10 @@ setRestPose();
 // HAND SHAPE SYSTEM
 // ═══════════════════════════════════════════════════════════════
 
-// setFingers: exts = [thumb, i, m, r, p] each 0=closed 1=extended
 function setFingers(armRig, exts){
-  const maxCurl = 2.0; // increased from 1.4 — makes closed vs open much clearer
-  // Thumb
+  const maxCurl = 2.0;
   armRig.thumb._p1.rotation.x = (1-exts[0]) * 1.0;
   armRig.thumb._p2.rotation.x = (1-exts[0]) * 0.8;
-
   armRig.fingers.forEach((f,i)=>{
     const curl = (1-exts[i+1]) * maxCurl;
     f._p1.rotation.x = curl * 0.4;
@@ -502,90 +800,84 @@ function setFingers(armRig, exts){
   });
 }
 
-// FIXED: negative rotation.x = arm goes toward camera (+Z)
-// neutral raised so left hand matches right hand at mid-chest
+function apply_custom_angles(armRig, angles, s) {
+  if (!angles) return;
+  armRig.upperArm.rotation.x = angles[0];
+  armRig.upperArm.rotation.z = s * angles[1];
+  armRig.foreArm.rotation.x  = angles[2];
+  armRig.hand.rotation.z     = angles[3];
+}
+
 function setArmPose(armRig, pose, side){
   const s = side === 'R' ? 1 : -1;
   switch(pose){
     case 'neutral':
-      // Mid-chest level, in front — both arms symmetric at this height
       armRig.upperArm.rotation.z = s * -0.50;
       armRig.upperArm.rotation.x = -0.85;
       armRig.foreArm.rotation.x  = -0.95;
       armRig.hand.rotation.x     =  0.18;
       break;
     case 'chest':
-      // Hand touching / near chest
       armRig.upperArm.rotation.z = s * -0.18;
       armRig.upperArm.rotation.x = -0.50;
       armRig.foreArm.rotation.x  = -1.65;
       armRig.hand.rotation.x     =  0.30;
       break;
     case 'forward':
-      // Hand extended forward, slightly higher than neutral
       armRig.upperArm.rotation.z = s * -0.44;
       armRig.upperArm.rotation.x = -0.92;
       armRig.foreArm.rotation.x  = -1.02;
       armRig.hand.rotation.x     =  0.14;
       break;
     case 'forehead':
-      // Hand raised to forehead
       armRig.upperArm.rotation.z = s * -0.22;
       armRig.upperArm.rotation.x = -1.18;
       armRig.foreArm.rotation.x  = -1.28;
       armRig.hand.rotation.x     =  0.40;
       break;
     case 'chin':
-      // Hand near chin/mouth-bottom
       armRig.upperArm.rotation.z = s * -0.22;
       armRig.upperArm.rotation.x = -1.00;
       armRig.foreArm.rotation.x  = -1.45;
       armRig.hand.rotation.x     =  0.22;
       break;
     case 'raised':
-      // Arm raised high, above head level
       armRig.upperArm.rotation.z = s * -0.14;
       armRig.upperArm.rotation.x = -1.32;
       armRig.foreArm.rotation.x  = -1.08;
       armRig.hand.rotation.x     =  0.06;
       break;
     case 'temple':
-      // Hand at side of head near temple
       armRig.upperArm.rotation.z = s * -0.20;
       armRig.upperArm.rotation.x = -1.14;
       armRig.foreArm.rotation.x  = -1.40;
       armRig.hand.rotation.x     =  0.44;
       break;
     case 'mouth':
-      // Hand near mouth/lips
       armRig.upperArm.rotation.z = s * -0.22;
       armRig.upperArm.rotation.x = -1.05;
       armRig.foreArm.rotation.x  = -1.40;
       armRig.hand.rotation.x     =  0.24;
       break;
     case 'ear':
-      // Hand near ear
       armRig.upperArm.rotation.z = s * -0.08;
       armRig.upperArm.rotation.x = -0.98;
       armRig.foreArm.rotation.x  = -1.08;
       armRig.hand.rotation.x     =  0.20;
       break;
     case 'wrist':
-      // Hand low, near waist/wrist
       armRig.upperArm.rotation.z = s * -0.48;
       armRig.upperArm.rotation.x = -0.65;
       armRig.foreArm.rotation.x  = -0.72;
       armRig.hand.rotation.x     = -0.08;
       break;
     case 'shoulder':
-      // Hand at shoulder level
       armRig.upperArm.rotation.z = s * -0.18;
       armRig.upperArm.rotation.x = -0.70;
       armRig.foreArm.rotation.x  = -0.55;
       armRig.hand.rotation.x     = -0.04;
       break;
     case 'sides':
-      // Arms out to the sides
       armRig.upperArm.rotation.z = s * -0.82;
       armRig.upperArm.rotation.x = -0.32;
       armRig.foreArm.rotation.x  = -0.44;
@@ -594,303 +886,131 @@ function setArmPose(armRig, pose, side){
   }
 }
 
-// Sign definitions: [R_fingers, R_pose, L_fingers, L_pose, headTilt]
-// fingers: [thumb,index,middle,ring,pinky] 0=closed 1=extended
-// ISL-corrected: two-handed signs use both hands, left stays at neutral height
+// Sign definitions: [R_fingers, R_pose, L_fingers, L_pose, headTilt, R_custom_angles?, L_custom_angles?]
 const SIGNS = {
-  // ── Greetings ──────────────────────────────────────────────────
-  // HELLO ISL: open-5 wave at forehead, left at neutral
-  HELLO:     [[1,1,1,1,1],'forehead',  [.5,.5,.5,.5,.5],'neutral',  0.1],
-  // GOODBYE ISL: open hand wave, left at neutral
-  GOODBYE:   [[1,1,1,1,1],'raised',    [.5,.5,.5,.5,.5],'neutral',  0],
-  // THANK ISL: flat-B from chin forward
-  THANK:     [[.9,1,1,1,1],'chin',     [.5,.5,.5,.5,.5],'neutral',  0.1],
-
-  // ── Pronouns ───────────────────────────────────────────────────
-  // I ISL: index finger points to chest (one-handed), left rests
-  I:         [[.3,1,.1,.1,.1],'chest',   [.5,.5,.5,.5,.5],'neutral', 0],
-  // YOU ISL: index points forward at person
-  YOU:       [[.3,1,.1,.1,.1],'forward', [.5,.5,.5,.5,.5],'neutral', 0],
-  // WE ISL: index sweeps from self outward (chest)
-  WE:        [[.3,1,.1,.1,.1],'chest',   [.5,.5,.5,.5,.5],'neutral', 0],
+  HELLO:     [[.6,.7,.8,.8,.7],'custom', [.5,.5,.5,.5,.5],'custom',  0, [-1.539, -0.381, -0.932, -0.305, 2.673], [-0.195, 0.183, -0.598, 0.0, 0.0]],
+  GOODBYE:   [[.6,.6,.7,.7,.6],'custom', [.7,.6,.5,.6,.6],'custom',  0, [-1.629, -0.473, -0.914, -0.314, 2.961], [-0.214, 0.211, -0.589, 0.106, -2.926]],
+  THANK:     [[.6,.9,1.0,1,1.0],'custom', [0,0,0,.0,0],'custom',  0, [-0.836, -0.182, -1.192, -0.29, 0.367], [-0.231, 0.147, -0.874, 0.444, -3.016]],
+  I:         [[.3,1,.1,.1,.1],'custom', [.5,.5,.5,.5,.5],'custom',  0, [-0.885, -0.352, -0.955, -0.326, 0.177], [-0.126, 0.069, -0.883, -0.002, -2.318]],
+  YOU:       [[.2,.4,.4,.3,.7],'custom', [.5,.3,.4,.4,.4],'custom',  0, [-1.233, -0.089, -0.959, -0.327, 1.146], [-0.062, 0.042, -0.646, 0.066, -0.931]],
+  WE:        [[.4,.4,.5,.5,.5],'custom', [.4,.3,.3,.3,.6],'custom',  0, [-0.961, -0.18, -1.073, -0.254, 1.06], [-0.95, 0.241, -1.088, -0.447, -2.417]],
   HE:        [[.3,1,.1,.1,.1],'forward', [.5,.5,.5,.5,.5],'neutral', 0.1],
   SHE:       [[.3,1,.1,.1,.1],'forward', [.5,.5,.5,.5,.5],'neutral', 0.1],
-  THEY:      [[.3,1,.1,.1,.1],'raised',  [.5,.5,.5,.5,.5],'neutral', 0],
-  // MY ISL: flat-B presses chest (one-handed)
-  MY:        [[.9,1,1,1,1],'chest',     [.5,.5,.5,.5,.5],'neutral',  0],
+  THEY:      [[.2,.5,.2,.1,.1],'custom', [.3,.3,.3,.2,.1],'custom',  0, [-1.086, -0.175, -1.209, -0.601, 0.48], [-0.342, 0.176, -1.051, 0.359, -2.915]],
+  MY:        [[.3,.1,.1,.1,.0],'custom', [.5,.5,.5,.5,.5],'custom',  0, [-0.985, -0.328, -1.045, -0.3, 0.267], [-0.364, 0.044, -1.165, 0.0, 0.0]],
   YOUR:      [[.9,1,1,1,1],'forward',   [.5,.5,.5,.5,.5],'neutral',  0],
-  OUR:       [[.9,1,1,1,1],'chest',     [.9,1,1,1,1],'chest',        0],
+  OUR:       [[.4,.2,.2,.2,.2],'custom', [.4,.5,.5,.6,.6],'custom',  0, [-1.005, -0.241, -1.085, -0.322, 0.406], [-0.758, 0.207, -1.011, -0.385, -1.944]],
   HIS:       [[.9,1,1,1,1],'forward',   [.5,.5,.5,.5,.5],'neutral',  0.1],
   HER:       [[.9,1,1,1,1],'forward',   [.5,.5,.5,.5,.5],'neutral',  0.1],
-
-  // ── Common verbs ───────────────────────────────────────────────
-  // KNOW ISL: flat-B taps temple (one-handed)
-  KNOW:      [[.9,1,1,1,1],'temple',    [.5,.5,.5,.5,.5],'neutral',  0],
-  // THINK ISL: index circles at temple
-  THINK:     [[.3,1,.1,.1,.1],'temple', [.5,.5,.5,.5,.5],'neutral',  0.1],
-  // UNDERSTAND ISL: index flicks up at forehead
-  UNDERSTAND:[[.3,1,.1,.1,.1],'forehead',[.5,.5,.5,.5,.5],'neutral', 0],
-  // LEARN ISL: bent-5 moves from palm to forehead
-  LEARN:     [[.9,.5,.5,.5,.5],'forehead',[.9,1,1,1,1],'neutral',   0],
-  // TEACH ISL: flat-O both hands move forward from forehead (bilateral)
-  TEACH:     [[.9,.5,.5,.5,.5],'forehead',[.9,.5,.5,.5,.5],'forehead',0],
-  // EXPLAIN ISL: both open-5 hands alternate forward (bilateral)
+  KNOW:      [[.5,.4,.4,.4,.5],'custom', [.5,.5,.5,.5,.5],'custom',  0, [-1.56, -0.329, -0.856, -0.287, 0.811], [-0.157, 0.073, -0.541, 0.0, 0.0]],
+  THINK:     [[.4,.6,.1,.1,.1],'custom', [.6,.6,.5,.4,.4],'custom',  0, [-1.3, -0.228, -1.011, -0.059, 0.799], [-0.121, 0.078, -0.614, 0.046, -2.95]],
+  UNDERSTAND:[[.4,.5,.2,.1,.1],'custom', [.5,.5,.5,.5,.5],'custom',  0, [-1.309, -0.359, -1.066, -0.174, 0.714], [-0.159, 0.145, -0.667, 0.0, 0.0]],
+  LEARN:     [[.7,.4,.4,.4,.3],'custom', [.5,.5,.5,.5,.5],'custom',  0, [-1.67, -0.488, -0.804, -0.319, 2.909], [-0.106, 0.101, -0.619, 0.0, 0.0]],
+  TEACH:     [[.5,.7,.9,.8,.7],'custom', [.6,.8,.9,.9,.8],'custom',  0, [-1.377, -0.495, -0.919, -0.85, 0.443], [-1.154, 0.54, -0.924, -0.738, -2.68]],
   EXPLAIN:   [[1,1,1,1,1],'forward',    [1,1,1,1,1],'forward',        0],
-  GO:        [[.3,1,.1,.1,.1],'forward', [.5,.5,.5,.5,.5],'neutral',  0],
-  COME:      [[.3,1,.1,.1,.1],'chest',   [.5,.5,.5,.5,.5],'neutral',  0],
+  GO:        [[.8,.8,.7,.7,.6],'custom', [.5,.5,.5,.5,.5],'custom',  0, [-1.805, -0.58, -0.628, -0.139, 2.243], [-0.085, 0.071, -0.613, 0.0, 0.0]],
+  COME:      [[.6,.4,.4,.5,.7],'custom', [.8,.8,.8,.8,.5],'custom',  0, [-0.802, -0.306, -0.91, -0.417, 2.03], [-0.148, 0.06, -0.758, 0.381, -3.061]],
   SHOW:      [[.3,1,.1,.1,.1],'forward', [.9,1,1,1,1],'neutral',      0],
-  // WORK ISL: two S-fists, right taps left wrist (bilateral)
-  WORK:      [[.1,.1,.1,.1,.1],'forward',[.1,.1,.1,.1,.1],'neutral',  0],
+  WORK:      [[.6,.7,.9,.9,.8],'custom', [.5,.7,1.0,1,.6],'custom',  0, [-1.192, -0.302, -1.051, -0.396, 0.315], [-1.055, 0.368, -1.052, -0.779, -2.522]],
   HELP:      [[.9,1,1,1,1],'forward',   [.5,.5,.5,.5,.5],'neutral',   0.1],
-  // WANT ISL: bent-5 hands pull inward (bilateral)
-  WANT:      [[.9,.5,.5,.5,.5],'forward',[.9,.5,.5,.5,.5],'forward',  0],
+  WANT:      [[.7,1.0,.9,.9,.9],'custom', [.5,.9,.9,.9,.9],'custom',  0, [-0.974, -0.215, -0.919, 0.137, 1.544], [-0.938, 0.221, -0.937, 0.202, -2.026]],
   NEED:      [[.3,.3,.1,.1,.1],'forward',[.5,.5,.5,.5,.5],'neutral',  -0.1],
   USE:       [[.3,1,1,.1,.1],'forward', [.5,.5,.5,.5,.5],'neutral',   0],
   STOP:      [[.9,1,1,1,1],'forward',   [.9,1,1,1,1],'forward',       0],
   START:     [[.3,1,.1,.1,.1],'forward', [.9,1,1,1,1],'forward',      0],
-  // HAVE ISL: bent-B both hands press chest (bilateral ISL)
-  HAVE:      [[.9,.6,.6,.6,.6],'chest',  [.9,.6,.6,.6,.6],'chest',    0],
-  // TAKE ISL: claw-5 grasps and pulls (one-handed)
-  TAKE:      [[.7,.7,.7,.7,.7],'forward',[.5,.5,.5,.5,.5],'neutral',  0],
+  HAVE:      [[.8,.8,.9,1,1],'custom', [.7,1.0,1,1,1],'custom',  0, [-0.93, -0.215, -0.929, -0.137, 2.694], [-0.944, 0.282, -0.864, -0.274, -0.608]],
+  TAKE:      [[.5,.7,.9,.8,.5],'custom', [.8,.9,.9,.8,.9],'custom',  0, [-1.007, -0.094, -1.149, -0.03, 0.808], [-0.134, 0.06, -0.73, 0.467, -2.697]],
   TAKING:    [[.7,.7,.7,.7,.7],'forward',[.5,.5,.5,.5,.5],'neutral',  0],
-  // TALK ISL: both index fingers alternate at mouth (bilateral)
-  TALK:      [[.3,1,.1,.1,.1],'mouth',  [.3,1,.1,.1,.1],'mouth',      0.1],
+  TALK:      [[.6,.7,.8,.3,.2],'custom', [.5,.7,.7,.2,.2],'custom',  0, [-1.114, -0.313, -1.159, -0.359, 2.494], [-1.058, 0.352, -1.195, -0.324, -0.715]],
   COVER:     [[.9,1,1,1,1],'forward',   [.9,1,1,1,1],'forward',       0],
-  COVERED:   [[.9,1,1,1,1],'forward',   [.9,1,1,1,1],'forward',       0],
-  MAKE:      [[.1,.1,.1,.1,.1],'forward',[.1,.1,.1,.1,.1],'forward',  0],
-  BECOME:    [[.9,1,1,1,1],'forward',   [.9,1,1,1,1],'forward',       0],
+  MAKE:      [[.3,.5,.4,.3,.5],'custom', [.3,.3,.3,.9,.8],'custom',  0, [-1.174, -0.149, -0.851, -0.422, 0.969], [-1.069, 0.191, -0.816, -0.439, -2.139]],
   IMAGINE:   [[.3,1,.1,.1,.1],'temple', [.5,.5,.5,.5,.5],'neutral',   0.2],
-  DEMONSTRATE:[[.9,1,1,1,1],'forward', [.9,1,1,1,1],'forward',        0],
-  STUDY:     [[.3,1,1,.1,.1],'forward', [.9,1,1,1,1],'neutral',       0],
+  STUDY:     [[.6,.8,1.0,1,.9],'custom', [.6,.8,1.0,1,1.0],'custom',  0, [-1.04, -0.096, -1.125, -0.172, 0.277], [-1.026, 0.154, -1.123, -0.133, -2.844]],
   FEEL:      [[.9,.5,.5,.5,.5],'chest', [.5,.5,.5,.5,.5],'neutral',   0],
-  FELT:      [[.9,.5,.5,.5,.5],'chest', [.5,.5,.5,.5,.5],'neutral',   0],
   MOVE:      [[.9,1,1,1,1],'forward',   [.9,1,1,1,1],'forward',       0],
-  MOVED:     [[.9,1,1,1,1],'forward',   [.9,1,1,1,1],'forward',       0],
   BRING:     [[1,1,1,1,1],'forward',    [1,1,1,1,1],'forward',         0],
-  BROUGHT:   [[1,1,1,1,1],'forward',    [1,1,1,1,1],'forward',         0],
-  RECORD:    [[.3,1,1,.1,.1],'forward', [.9,1,1,1,1],'forward',        0],
-  RECORDED:  [[.3,1,1,.1,.1],'forward', [.9,1,1,1,1],'forward',        0],
-  EVOLVE:    [[.9,.5,.5,.5,.5],'forward',[.9,.5,.5,.5,.5],'forward',  0.1],
-  EVOLVED:   [[.9,.5,.5,.5,.5],'forward',[.9,.5,.5,.5,.5],'forward',  0.1],
-  ENJOY:     [[1,1,1,1,1],'chest',      [1,1,1,1,1],'chest',           0.2],
-  ENJOYED:   [[1,1,1,1,1],'chest',      [1,1,1,1,1],'chest',           0.2],
-  // FINISH ISL: both open-5 flip outward (bilateral)
+  ENJOY:     [[.5,.6,.8,.8,.7],'custom', [.5,.7,.9,.8,.6],'custom',  0, [-1.137, -0.369, -0.998, -0.873, 0.227], [-0.877, 0.333, -0.956, -0.956, -2.878]],
   FINISH:    [[1,1,1,1,1],'forward',    [1,1,1,1,1],'forward',          0],
-  FINISHED:  [[1,1,1,1,1],'forward',    [1,1,1,1,1],'forward',          0],
-  DO:        [[.1,.1,.1,.1,.1],'forward',[.1,.1,.1,.1,.1],'neutral',  0],
-  WRITE:     [[.3,.5,.1,.1,.1],'forward',[.9,1,1,1,1],'neutral',       0],
-  WRITTEN:   [[.3,.5,.1,.1,.1],'forward',[.9,1,1,1,1],'neutral',       0],
+  FINISHED:  [[.6,.6,.7,.7,.7],'custom', [.5,.6,.7,.7,.7],'custom',  0, [-1.317, -0.451, -0.951, -0.23, 1.481], [-1.317, 0.536, -0.951, -0.511, -1.975]],
+  DO:        [[.6,.3,.2,.1,.1],'custom', [.4,.8,.3,.3,.3],'custom',  0, [-1.0, -0.3, -0.958, -0.211, 2.843], [-0.951, 0.241, -0.924, -0.278, -1.404]],
+  WRITE:     [[.5,.3,.2,.1,.1],'custom', [.5,.6,1,1,1.0],'custom',  0, [-1.238, -0.445, -0.969, -0.537, 2.529], [-0.983, 0.333, -1.036, -0.469, -2.677]],
   READ:      [[.3,1,1,.1,.1],'forward', [.9,1,1,1,1],'neutral',        0],
-  CALL:      [[1,.1,.1,.1,1],'ear',     [.5,.5,.5,.5,.5],'neutral',    0],
-
-  // ── Conjunctions / connectors ──────────────────────────────────
-  // AND ISL: open-5 closes to flat-O (one-handed)
-  AND:       [[1,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',    0],
+  CALL:      [[.7,.4,.4,.3,.3],'custom', [.4,.4,.4,.3,.4],'custom',  0, [-1.328, -0.326, -0.866, -0.32, 2.848], [-0.257, 0.211, -0.614, 0.092, -0.431]],
+  AND:       [[.3,.3,.4,.4,.3],'custom', [.4,.7,.8,.6,.6],'custom',  0, [-1.158, -0.207, -1.068, -0.399, 0.836], [-1.131, 0.273, -1.038, -0.407, -2.317]],
   BUT:       [[.3,1,.1,.1,.1],'forward',[.5,.5,.5,.5,.5],'neutral',   -0.1],
   OR:        [[1,1,.1,.1,.1],'forward', [.5,.5,.5,.5,.5],'neutral',   -0.1],
   THEN:      [[.3,1,.1,.1,.1],'forward',[.5,.5,.5,.5,.5],'neutral',    0],
   BECAUSE:   [[.3,1,.1,.1,.1],'temple', [.5,.5,.5,.5,.5],'neutral',   0.15],
   ALSO:      [[.8,.1,.1,.1,.1],'forward',[.5,.5,.5,.5,.5],'neutral',   0],
-  FORTH:     [[.9,1,1,1,1],'forward',   [.5,.5,.5,.5,.5],'neutral',    0],
-  WELL:      [[1,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',   0.1],
-
-  // ── Determiners / pointers ─────────────────────────────────────
-  // THIS ISL: index pointing down at a spot (one-handed), left at forward for symmetry
-  THIS:      [[.3,1,.1,.1,.1],'forward', [.5,.5,.5,.5,.5],'neutral',  -0.1],
-  THAT:      [[.3,1,.1,.1,.1],'forward', [.5,.5,.5,.5,.5],'neutral',   0.1],
-  // IT ISL: index pointing (one-handed)
-  IT:        [[.3,1,.1,.1,.1],'forward', [.5,.5,.5,.5,.5],'neutral',   0],
-  THESE:     [[.3,1,.1,.1,.1],'forward', [.5,.5,.5,.5,.5],'neutral',   0],
-  THERE:     [[.3,1,.1,.1,.1],'raised',  [.5,.5,.5,.5,.5],'neutral',  0.1],
-  HERE:      [[.3,1,.1,.1,.1],'forward', [.5,.5,.5,.5,.5],'neutral',  -0.1],
-  EVERYONE:  [[1,1,1,1,1],'raised',      [.5,.5,.5,.5,.5],'neutral',  0.1],
-
-  // ── Auxiliary / modal verbs ────────────────────────────────────
+  WELL:      [[.4,.8,.7,.5,.4],'custom', [.3,.7,.8,.7,.4],'custom',  0, [-1.286, -0.356, -0.851, -0.533, 0.746], [-0.751, 0.309, -0.819, -0.484, -2.613]],
+  THIS:      [[.4,.4,.3,.4,.7],'custom', [.3,.5,.3,.2,.2],'custom',  0, [-0.872, -0.313, -1.089, -0.294, 1.469], [-0.097, 0.025, -0.804, 0.358, -0.504]],
+  THAT:      [[.5,.2,.2,.3,.3],'custom', [.5,.6,.5,.7,.7],'custom',  0, [-0.997, -0.385, -0.915, -0.27, 1.26], [-0.055, 0.014, -0.693, -0.21, -1.352]],
+  IT:        [[.5,.6,.7,.7,.6],'custom', [.5,.6,.6,.6,.5],'custom',  0, [-1.981, -0.631, -0.737, -0.436, 1.087], [-1.695, 0.604, -0.772, -0.433, -1.96]],
+  THERE:     [[.3,.5,.3,.2,.2],'custom', [.8,.7,.2,.2,.1],'custom',  0, [-1.434, -0.547, -0.785, 0.446, 2.911], [-0.045, 0.02, -0.665, 0.338, -0.146]],
+  HERE:      [[.8,1,1.0,1.0,.7],'custom', [1,.9,1.0,.9,.7],'custom',  0, [-0.925, -0.374, -0.819, -0.202, 2.523], [-0.591, 0.298, -0.888, -0.219, -0.311]],
   WILL:      [[.3,1,.1,.1,.1],'chin',    [.5,.5,.5,.5,.5],'neutral',   0],
   WOULD:     [[.9,.6,.6,.6,.6],'forward',[.5,.5,.5,.5,.5],'neutral',   0],
-  // CAN ISL: both A-fists downward (bilateral)
-  CAN:       [[.1,.1,.1,.1,.1],'forward',[.1,.1,.1,.1,.1],'forward',   0],
-  COULD:     [[.1,.1,.1,.1,.1],'forward',[.1,.1,.1,.1,.1],'neutral',   0],
-  HAS:       [[.9,.6,.6,.6,.6],'chest',  [.5,.5,.5,.5,.5],'neutral',   0],
-  BEEN:      [[.9,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',  -0.1],
-  MAY:       [[1,1,1,1,1],'forward',     [1,1,1,1,1],'neutral',        0.1],
-  YEAH:      [[.1,.1,.1,.1,.1],'forward',[.5,.5,.5,.5,.5],'neutral',  -0.15],
-
-  // ── Prepositions ───────────────────────────────────────────────
-  // OF ISL: F-hand rotation
+  CAN:       [[.4,.4,.5,.7,.7],'custom', [.5,.4,.6,.9,1.0],'custom',  0, [-1.179, -0.288, -1.035, -0.632, 0.88], [-1.05, 0.199, -1.075, -0.577, -2.343]],
+  MAY:       [[.5,.4,.3,.2,.2],'custom', [.6,.6,.4,.4,.4],'custom',  0, [-1.216, -0.342, -1.042, -0.541, 1.702], [-1.097, 0.306, -1.105, -0.183, -0.948]],
   OF:        [[.3,.3,1,1,1],'forward',   [.5,.5,.5,.5,.5],'neutral',   0],
-  // IN ISL: flat-O right inserts into C left (bilateral two-handed sign)
-  IN:        [[.3,.3,.3,.3,.3],'forward',[.7,.7,.7,.7,.7],'forward',   0],
-  // FOR ISL: index at temple twisting forward
+  IN:        [[.6,.9,1,1,.9],'custom', [.3,.4,.7,1,1],'custom',  0, [-1.467, -0.399, -0.951, -0.652, 0.427], [-1.148, 0.323, -1.017, -0.812, -2.531]],
   FOR:       [[.3,1,.1,.1,.1],'temple',  [.5,.5,.5,.5,.5],'neutral',   0],
-  FROM:      [[.3,1,.1,.1,.1],'forward', [.5,.5,.5,.5,.5],'neutral',   0],
-  AT:        [[.9,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',   0],
-  // ON ISL: flat-B places on back of left hand (bilateral)
+  FROM:      [[.6,.4,.5,.7,.9],'custom', [.7,.9,.9,.8,.7],'custom',  0, [-1.053, -0.364, -1.011, -0.865, 1.312], [-0.117, 0.081, -0.793, -0.613, -1.399]],
+  AT:        [[.6,.6,.7,.7,.6],'custom', [.5,.5,.3,.3,.3],'custom',  0, [-1.211, -0.199, -1.186, -0.392, 0.931], [-1.122, 0.29, -1.162, -0.293, -1.687]],
   ON:        [[.9,1,1,1,1],'forward',    [.9,1,1,1,1],'forward',       0],
-  INTO:      [[.3,.3,.3,.3,.3],'forward',[.7,.7,.7,.7,.7],'forward',   0],
   ABOUT:     [[.3,1,.1,.1,.1],'forward', [.9,1,1,1,1],'neutral',       0],
-  AS:        [[.8,.1,.1,.1,.1],'forward',[.5,.5,.5,.5,.5],'neutral',   0],
-  UNTIL:     [[.3,1,.1,.1,.1],'forward', [.5,.5,.5,.5,.5],'neutral',   0],
-  SINCE:     [[.3,1,.1,.1,.1],'forward', [.5,.5,.5,.5,.5],'neutral',  -0.1],
-  AFTER:     [[.9,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',   0],
-  OUT:       [[.3,.3,.3,.3,.3],'forward',[.5,.5,.5,.5,.5],'neutral',   0],
-  BACK:      [[.9,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',  -0.1],
-
-  // ── Question words ─────────────────────────────────────────────
+  SINCE:     [[.6,.7,.8,.8,.7],'custom', [.7,.8,.9,.9,.8],'custom',  0, [-1.173, -0.32, -0.985, -0.101, 0.779], [-0.107, 0.084, -0.776, -0.007, -2.887]],
+  AFTER:     [[.6,.7,.8,.8,.6],'custom', [.7,.2,.3,.5,.8],'custom',  0, [-1.052, -0.373, -0.994, -0.176, 1.279], [-0.118, 0.064, -0.784, 0.525, -1.494]],
+  OUT:       [[.5,.7,.9,1.0,1.0],'custom', [.6,.5,.6,.6,.6],'custom',  0, [-1.643, -0.47, -0.781, -0.055, 0.681], [-0.188, 0.069, -0.598, 0.153, -1.19]],
+  BACK:      [[.6,.5,.4,.5,.4],'custom', [.5,.6,.5,.3,.2],'custom',  0, [-1.122, -0.285, -0.967, -0.192, 0.952], [-0.851, 0.481, -1.079, -0.504, -2.759]],
   WHAT:      [[1,1,1,1,1],'forward',    [1,1,1,1,1],'forward',         -0.1],
-  WHERE:     [[.3,1,.1,.1,.1],'forward',[.5,.5,.5,.5,.5],'neutral',   -0.1],
+  WHERE:     [[.5,.5,.6,.6,.5],'custom', [.9,.8,.7,.7,.6],'custom',  0, [-1.286, -0.446, -1.001, -0.349, 1.011], [-0.835, 0.143, -1.05, -0.279, -0.829]],
   WHO:       [[.9,1,.1,.1,.1],'chin',   [.5,.5,.5,.5,.5],'neutral',   -0.1],
-  HOW:       [[.9,.6,.6,.6,.6],'forward',[.9,.6,.6,.6,.6],'forward',  -0.1],
-  WHEN:      [[.3,1,.1,.1,.1],'forward',[.5,.5,.5,.5,.5],'neutral',   -0.1],
+  HOW:       [[.5,.6,.6,.6,.6],'custom', [.7,.8,.7,.6,.4],'custom',  0, [-1.367, -0.39, -0.938, -0.28, 0.888], [-1.037, 0.346, -0.911, -0.381, -2.334]],
+  WHEN:      [[.5,.7,.8,.8,.7],'custom', [.5,.5,.5,.5,.5],'custom',  0, [-1.077, -0.315, -1.178, -0.345, 1.116], [-0.162, 0.146, -0.778, 0.0, 0.0]],
   WHY:       [[.9,.1,.5,.1,.1],'temple', [.5,.5,.5,.5,.5],'neutral',  -0.15],
-  WHICH:     [[.8,.1,.1,.1,.1],'forward',[.5,.5,.5,.5,.5],'neutral',  -0.15],
-
-  // ── Modifiers ──────────────────────────────────────────────────
-  NOT:       [[.9,.1,.1,.1,.1],'chin',   [.5,.5,.5,.5,.5],'neutral',  -0.2],
-  GOOD:      [[.9,1,1,1,1],'chin',       [.5,.5,.5,.5,.5],'neutral',   0.15],
-  BAD:       [[.9,1,1,1,1],'chin',       [.5,.5,.5,.5,.5],'neutral',  -0.15],
-  NEW:       [[.9,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',   0.1],
-  MODERN:    [[.2,.2,.2,.2,.2],'forward',[.5,.5,.5,.5,.5],'neutral',   0.1],
-  TRADITIONAL:[[.5,.3,.1,.1,.1],'forward',[.5,.3,.1,.1,.1],'forward', 0],
-  INTERESTING:[[.9,.5,.5,.5,.5],'chest', [.5,.5,.5,.5,.5],'neutral',  0.15],
-  EXTREMELY: [[.3,.3,.1,.1,.1],'forward',[.5,.5,.5,.5,.5],'neutral',   0.2],
-  OBVIOUSLY: [[1,1,1,1,1],'forward',     [1,1,1,1,1],'forward',       0.15],
-  EVERYTHING:[[1,1,1,1,1],'raised',      [1,1,1,1,1],'raised',         0.1],
-  POPULAR:   [[.3,1,1,.1,.1],'forward',  [.5,.5,.5,.5,.5],'neutral',   0.1],
-  FANTASTIC: [[.3,.3,1,1,1],'forward',   [.3,.3,1,1,1],'forward',      0.2],
-  TYPICAL:   [[.5,.3,.1,.1,.1],'forward',[.5,.3,.1,.1,.1],'forward',   0],
-  ALMOST:    [[.9,1,1,1,1],'forward',    [.9,1,1,1,1],'neutral',      -0.1],
-  REALLY:    [[.3,1,1,.1,.1],'forward',  [.5,.5,.5,.5,.5],'neutral',  0.15],
-  PARTICULAR:[[.3,1,1,.1,.1],'forward',  [.5,.5,.5,.5,.5],'neutral',   0],
-  VARIOUS:   [[.3,1,1,.1,.1],'raised',   [.5,.5,.5,.5,.5],'neutral',   0],
-  CERTAIN:   [[.7,.7,.7,.7,.7],'forward',[.5,.5,.5,.5,.5],'neutral',   0],
-  FULL:      [[.9,1,1,1,1],'forward',    [.9,1,1,1,1],'neutral',       0.1],
-  ONLY:      [[.3,1,.1,.1,.1],'forward', [.5,.5,.5,.5,.5],'neutral',   0],
-  MUCH:      [[.9,.5,.5,.5,.5],'forward',[.9,.5,.5,.5,.5],'forward',  0.15],
-  SOME:      [[.9,1,1,1,1],'forward',    [.9,1,1,1,1],'neutral',       0],
-  BOTH:      [[.3,1,1,.1,.1],'forward',  [.3,1,1,.1,.1],'forward',     0],
-  ABLE:      [[.8,.1,.1,.1,.1],'forward',[.8,.1,.1,.1,.1],'forward',   0],
-  SPECIFIC:  [[.1,.1,.1,.1,.1],'forward',[.5,.5,.5,.5,.5],'neutral',  -0.1],
-  SEVERAL:   [[1,1,1,1,1],'forward',     [.5,.5,.5,.5,.5],'neutral',   0],
-  MANY:      [[.3,.3,.3,.3,.3],'raised', [.3,.3,.3,.3,.3],'raised',   0.1],
-  MORE:      [[.3,.3,.3,.3,.3],'forward',[.5,.5,.5,.5,.5],'neutral',   0],
-  LOT:       [[1,1,.1,.1,.1],'forward',  [.5,.5,.5,.5,.5],'neutral',  0.15],
-  ALL:       [[1,1,1,1,1],'raised',      [.5,.5,.5,.5,.5],'neutral',   0],
-  ONE:       [[.3,1,.1,.1,.1],'raised',  [.5,.5,.5,.5,.5],'neutral',   0],
-  FIVE:      [[1,1,1,1,1],'raised',      [.5,.5,.5,.5,.5],'neutral',   0],
-  SIX:       [[1,.1,.1,.1,1],'chin',     [.5,.5,.5,.5,.5],'neutral',   0],
-  PERCENT:   [[.3,1,1,.1,.1],'forward',  [.5,.5,.5,.5,.5],'neutral',   0],
-
-  // ── Academic / AI terms ────────────────────────────────────────
-  INTELLIGENCE: [[.3,1,.1,.1,.1],'temple',[.5,.5,.5,.5,.5],'neutral', 0.2],
-  INTELLIGENT:  [[.3,1,.1,.1,.1],'temple',[.5,.5,.5,.5,.5],'neutral', 0.1],
-  ARTIFICIAL:   [[.8,.1,.1,.1,.1],'forward',[.8,.1,.1,.1,.1],'forward',0],
-  MACHINE:      [[.9,.5,.5,.5,.5],'forward',[.9,.5,.5,.5,.5],'forward',0],
-  NEURAL:       [[.9,.5,.5,.5,.5],'forward',[.9,.5,.5,.5,.5],'forward',0],
-  COMPUTATIONAL:[[.7,.7,.7,.7,.7],'forward',[.7,.7,.7,.7,.7],'forward',0],
-  PROBABILISTIC:[[.3,1,1,.1,.1],'forward', [.5,.5,.5,.5,.5],'neutral', 0],
-  STATISTICAL:  [[.1,.1,.1,.1,.1],'forward',[.1,.1,.1,.1,.1],'forward',0],
-  ALGORITHM:    [[.8,.1,.1,.1,.1],'forward',[.9,1,1,1,1],'neutral',    0],
-  DATA:         [[.7,1,.3,.3,.3],'forward', [.5,.5,.5,.5,.5],'neutral', 0],
-  TRAIN:        [[.8,.1,.1,.1,.1],'forward',[.8,.1,.1,.1,.1],'forward', 0],
-  UNDERGRADUATE:[[.3,1,1,.1,.1],'forward', [.9,1,1,1,1],'neutral',    -0.1],
-  INTRODUCTORY: [[.3,1,.1,.1,.1],'forward',[.9,1,1,1,1],'forward',     0],
-
-  // ── Common nouns ───────────────────────────────────────────────
-  COURSE:    [[.7,.7,.7,.7,.7],'forward', [.9,1,1,1,1],'neutral',      0],
-  COURSES:   [[.7,.7,.7,.7,.7],'forward', [.9,1,1,1,1],'neutral',      0],
-  BOOK:      [[.9,1,1,1,1],'forward',     [.9,1,1,1,1],'forward',       0],
-  FIELD:     [[.3,.3,1,1,1],'forward',    [.3,.3,1,1,1],'forward',      0],
-  TOPICS:    [[.3,1,.1,.1,.1],'forward',  [.5,.5,.5,.5,.5],'neutral',   0],
-  MODEL:     [[.2,.2,.2,.2,.2],'forward', [.2,.2,.2,.2,.2],'forward',   0],
-  LECTURE:   [[1,1,.1,.1,.1],'mouth',     [.5,.5,.5,.5,.5],'neutral',   0],
-  LECTURES:  [[1,1,.1,.1,.1],'mouth',     [.5,.5,.5,.5,.5],'neutral',   0],
-  PROGRAM:   [[.3,1,1,.1,.1],'forward',   [.9,1,1,1,1],'neutral',       0],
-  TIME:      [[.3,1,.1,.1,.1],'wrist',    [.5,.5,.5,.5,.5],'neutral',   0],
-  TIMES:     [[.3,1,.1,.1,.1],'wrist',    [.5,.5,.5,.5,.5],'neutral',   0],
-  WEEK:      [[.3,1,.1,.1,.1],'forward',  [.9,1,1,1,1],'neutral',       0],
-  YEAR:      [[.1,.1,.1,.1,.1],'forward', [.5,.5,.5,.5,.5],'neutral',   0],
-  YEARS:     [[.1,.1,.1,.1,.1],'forward', [.5,.5,.5,.5,.5],'neutral',   0],
-  SEMESTER:  [[.1,.1,.1,.1,.1],'forward', [.9,1,1,1,1],'neutral',       0],
-  NAME:      [[.3,1,1,.1,.1],'forward',   [.5,.5,.5,.5,.5],'neutral',   0],
-  NEWSPAPER: [[1,1,1,1,1],'forward',      [.9,1,1,1,1],'neutral',       0],
-  NEWSPAPERS:[[1,1,1,1,1],'forward',      [.9,1,1,1,1],'neutral',       0],
-  HISTORY:   [[.3,1,1,.1,.1],'forward',   [.5,.5,.5,.5,.5],'neutral',   0],
-  SUBJECT:   [[.1,.1,.1,.1,.1],'chest',   [.5,.5,.5,.5,.5],'neutral',   0],
-  PART:      [[.9,1,1,1,1],'forward',     [.9,1,1,1,1],'neutral',       0],
-  DEPTH:     [[.9,1,1,1,1],'forward',     [.9,1,1,1,1],'neutral',      -0.2],
-  LEVEL:     [[.9,1,1,1,1],'forward',     [.9,1,1,1,1],'forward',       0],
-  CONTENT:   [[.7,.7,.7,.7,.7],'chest',   [.5,.5,.5,.5,.5],'neutral',   0],
-  PHILOSOPHY:[[.3,1,1,.1,.1],'forward',   [.3,1,1,.1,.1],'forward',    0.1],
-  INTERVIEW: [[.3,1,1,.1,.1],'forward',   [.3,1,1,.1,.1],'forward',     0],
-  CONCEPT:   [[.7,.7,.7,.7,.7],'temple',  [.5,.5,.5,.5,.5],'neutral',   0],
-  CONCEPTS:  [[.7,.7,.7,.7,.7],'temple',  [.5,.5,.5,.5,.5],'neutral',   0],
-  TECHNIQUE: [[.5,.3,.1,.1,.1],'forward', [.5,.5,.5,.5,.5],'neutral',   0],
-  TECHNIQUES:[[.5,.3,.1,.1,.1],'forward', [.5,.5,.5,.5,.5],'neutral',   0],
-  STORY:     [[.3,.3,1,1,1],'forward',    [.3,.3,1,1,1],'forward',      0],
-  STORIES:   [[.3,.3,1,1,1],'forward',    [.3,.3,1,1,1],'forward',      0],
-  BEHAVIOR:  [[.9,1,1,1,1],'forward',     [.9,1,1,1,1],'forward',       0],
-  CHAPTER:   [[.7,.7,.7,.7,.7],'forward', [.9,1,1,1,1],'neutral',       0],
-  CHAPTERS:  [[.7,.7,.7,.7,.7],'forward', [.9,1,1,1,1],'neutral',       0],
-  POLICY:    [[.3,1,1,.1,.1],'forward',   [.9,1,1,1,1],'neutral',       0],
-  VIDEO:     [[.3,1,1,.1,.1],'forward',   [.5,.5,.5,.5,.5],'neutral',   0],
-  FACT:      [[.3,.3,1,1,1],'forward',    [.9,1,1,1,1],'neutral',       0],
-  BIBLE:     [[.9,1,1,1,1],'forward',     [.9,1,1,1,1],'forward',       0],
-  INTRODUCTION:[[.3,1,.1,.1,.1],'forward',[.9,1,1,1,1],'forward',       0],
-  COMPUTER:  [[.7,.7,.7,.7,.7],'forward', [.9,1,1,1,1],'neutral',       0],
-  LANGUAGE:  [[1,1,.1,.1,.1],'forward',   [.5,.5,.5,.5,.5],'neutral',   0],
-  NETWORK:   [[1,1,1,1,1],'forward',      [1,1,1,1,1],'forward',         0],
-  CLASS:     [[.7,.7,.7,.7,.7],'forward', [.5,.5,.5,.5,.5],'neutral',   0],
-  MEMBER:    [[.2,.2,.2,.2,.2],'shoulder',[.5,.5,.5,.5,.5],'neutral',   0],
-  MINISTER:  [[.2,.2,.2,.2,.2],'shoulder',[.2,.2,.2,.2,.2],'shoulder',  0],
-  PRIME:     [[.3,1,1,.1,.1],'raised',    [.5,.5,.5,.5,.5],'neutral',   0],
-  UNIVERSITY:[[.3,1,1,.1,.1],'raised',    [.5,.5,.5,.5,.5],'neutral',   0],
-  HUMAN:     [[.3,1,1,.1,.1],'forward',   [.5,.5,.5,.5,.5],'neutral',   0],
-  HUMANS:    [[.3,1,1,.1,.1],'forward',   [.5,.5,.5,.5,.5],'neutral',   0],
-  STUDENT:   [[.3,.3,.3,.3,.3],'forehead',[.5,.5,.5,.5,.5],'neutral',  0],
-  STUDENTS:  [[.3,.3,.3,.3,.3],'forehead',[.5,.5,.5,.5,.5],'neutral',  0],
-  TEACHER:   [[.3,.3,.3,.3,.3],'forehead',[.3,.3,.3,.3,.3],'forehead', 0],
-  PROFESSOR: [[.3,1,1,.1,.1],'forehead',  [.5,.5,.5,.5,.5],'neutral',  0],
-  RESEARCHER:[[.3,1,1,.1,.1],'forward',   [.9,1,1,1,1],'neutral',       0],
-  FACULTY:   [[.3,.3,1,1,1],'forward',    [.3,.3,1,1,1],'forward',      0],
-  PRIMATE:   [[.3,1,1,.1,.1],'forward',   [.5,.5,.5,.5,.5],'neutral',   0],
-  MONKEY:    [[.7,.7,.7,.7,.7],'sides',   [.7,.7,.7,.7,.7],'sides',      0],
-  "MONKEY'S":[[.7,.7,.7,.7,.7],'sides',   [.7,.7,.7,.7,.7],'sides',      0],
-  TODAY:     [[1,.1,.1,.1,1],'forward',   [.5,.5,.5,.5,.5],'neutral',   0],
-  HOME:      [[.3,.3,.3,.3,.3],'chin',    [.5,.5,.5,.5,.5],'neutral',   0],
-  HOPE:      [[.3,1,.1,.1,.1],'forehead', [.5,.5,.5,.5,.5],'neutral',  0.15],
-  EXCITED:   [[.9,.5,.5,.5,.5],'chest',   [.9,.5,.5,.5,.5],'chest',     0.2],
-  FUN:       [[.3,1,1,.1,.1],'forward',   [.5,.5,.5,.5,.5],'neutral',   0.2],
-  ENGAGING:  [[.9,.5,.5,.5,.5],'chest',   [.5,.5,.5,.5,.5],'neutral',  0.15],
-  YOGA:      [[1,.1,.1,.1,1],'forward',   [1,.1,.1,.1,1],'forward',     0.1],
-
-  // ── Proper nouns — fingerspell (open hand at forward) ──────────
+  WHICH:     [[.6,.6,.7,.7,.7],'custom', [.5,.6,.5,.4,.4],'custom',  0, [-0.944, -0.202, -1.14, 0.121, 1.375], [-0.156, 0.156, -0.783, 0.266, -1.993]],
+  NOT:       [[.6,.6,.6,.6,1],'custom', [.6,.7,.6,.7,.9],'custom',  0, [-1.007, -0.144, -1.095, -0.249, 0.776], [-0.24, 0.051, -0.979, 0.19, -0.944]],
+  GOOD:      [[.6,.3,.8,.8,.7],'custom', [.5,.5,.5,.5,.5],'custom',  0, [-1.155, -0.29, -1.1, -0.343, 2.487], [-0.106, 0.121, -0.649, 0.0, 0.0]],
+  BAD:       [[.8,.6,.8,.8,.8],'custom', [.8,.7,.8,.7,.7],'custom',  0, [-0.982, -0.262, -0.967, -0.154, 1.427], [-0.076, 0.031, -0.773, -0.094, -1.649]],
+  MODERN:    [[.6,.6,.6,.7,.7],'custom', [.5,.7,.8,.9,.8],'custom',  0, [-1.278, -0.331, -0.951, -0.238, 0.844], [-0.795, 0.174, -0.911, -0.183, -2.138]],
+  MANY:      [[.7,.9,.9,.9,.7],'custom', [.7,1.0,1.0,1.0,1.0],'custom',  0, [-0.979, -0.205, -1.077, 0.338, 0.698], [-0.971, 0.235, -1.08, 0.318, -2.621]],
+  LOT:       [[.5,.6,.7,.7,.7],'custom', [.4,.7,.6,.6,.5],'custom',  0, [-1.217, -0.405, -1.041, -0.417, 0.987], [-1.121, 0.12, -1.166, -0.253, -2.392]],
+  SOME:      [[.7,1,1,1,1],'custom', [.7,1,1,1,1],'custom',  0, [-0.991, -0.105, -1.225, 0.04, 0.425], [-0.125, 0.148, -0.724, 0.102, -2.737]],
+  BOTH:      [[.4,1.0,1,.4,.4],'custom', [.6,.7,.4,.3,.6],'custom',  0, [-0.766, -0.107, -1.198, 0.266, 0.815], [-0.202, 0.129, -0.882, 0.086, -0.637]],
+  ONE:       [[.2,.7,.3,.2,.1],'custom', [.5,.7,.4,.3,.4],'custom',  0, [-1.25, -0.331, -1.007, -0.766, 0.797], [-0.998, 0.287, -1.043, -0.569, -0.696]],
+  COURSE:    [[.4,.6,.7,.8,.9],'custom', [.5,.9,1,1,.9],'custom',  0, [-1.113, -0.079, -1.143, -0.438, 0.709], [-0.949, 0.099, -1.124, 0.462, -2.655]],
+  MODEL:     [[.6,.6,.5,.5,.5],'custom', [.4,.7,.3,.2,.2],'custom',  0, [-1.42, -0.457, -0.988, -0.135, 2.921], [-0.956, 0.21, -0.962, -0.365, -2.549]],
+  PROGRAM:   [[.6,.3,.2,.2,.2],'custom', [.6,.9,1,1,1.0],'custom',  0, [-1.135, -0.112, -1.123, -0.218, 0.198], [-1.056, 0.192, -1.12, -0.031, -2.657]],
+  TIME:      [[.4,.3,.3,.2,.2],'custom', [.8,.4,.5,.5,.5],'custom',  0, [-1.412, -0.4, -0.907, -0.813, 1.253], [-1.362, 0.432, -0.831, -0.33, -2.799]],
+  WEEK:      [[.5,.4,.6,.5,.5],'custom', [.5,.5,.6,.5,.4],'custom',  0, [-1.007, -0.295, -1.129, -0.267, 2.814], [-0.169, 0.135, -0.769, 0.215, -0.677]],
+  YEAR:      [[.2,.5,.2,.1,.1],'custom', [.5,.6,.4,.3,.2],'custom',  0, [-1.086, -0.245, -1.158, -0.649, 0.357], [-0.998, 0.201, -1.062, 0.417, -0.445]],
+  NAME:      [[.0,.1,.1,.1,.0],'custom', [.5,.8,.8,.7,.5],'custom',  0, [-0.878, -0.238, -1.142, -0.293, 0.135], [-0.631, 0.369, -0.828, 0.733, -0.194]],
+  HISTORY:   [[.5,.5,.6,.5,.5],'custom', [.5,.5,.4,.4,.4],'custom',  0, [-1.978, -0.574, -0.584, -0.294, 1.676], [-1.285, 0.181, -0.845, -0.516, -2.414]],
+  PART:      [[.6,.5,.6,.7,.7],'custom', [.4,.4,.4,.4,.4],'custom',  0, [-1.19, -0.299, -0.971, -0.131, 1.141], [-0.987, 0.064, -1.047, -0.038, -2.391]],
+  LEVEL:     [[.5,.4,.4,.4,.4],'custom', [.6,.4,.4,.4,.4],'custom',  0, [-1.332, -0.302, -1.006, -0.319, 1.975], [-1.24, 0.306, -1.077, -0.153, -1.157]],
+  INTERVIEW: [[.5,.1,.1,.1,.8],'custom', [.5,.1,.1,.1,.8],'custom',  0, [-1.019, -0.166, -1.112, -0.175, 1.728], [-0.991, 0.192, -1.113, -0.256, -2.245]],
+  TODAY:     [[.5,.4,.3,.3,.4],'custom', [.3,.5,.2,.2,.2],'custom',  0, [-1.068, -0.414, -1.085, -0.568, 1.727], [-0.237, 0.143, -0.805, 0.437, -1.413]],
+  HOPE:      [[.4,.7,.7,.2,.2],'custom', [.7,.7,.8,.3,.3],'custom',  0, [-1.433, -0.426, -1.009, -0.115, 2.849], [-1.191, 0.401, -1.141, -0.042, -0.294]],
+  EXCITED:   [[.5,.7,.8,.8,.7],'custom', [.7,.5,.5,.4,.4],'custom',  0, [-0.971, -0.21, -1.04, -0.222, 0.644], [-0.237, 0.145, -0.853, 0.38, -0.557]],
+  FUN:       [[.3,.5,.4,.4,.3],'custom', [.5,.4,.3,.2,.3],'custom',  0, [-0.954, -0.201, -1.026, -0.455, 0.249], [-0.89, 0.117, -1.074, -0.883, -2.708]],
+  VIDEO:     [[.3,.1,.1,.1,.1],'custom', [.6,.4,.3,.3,.3],'custom',  0, [-1.752, -0.53, -0.79, -0.54, 0.702], [-0.159, 0.144, -0.533, 0.197, -1.644]],
+  STUDENT:   [[.5,.6,.7,.8,.8],'custom', [.6,.4,.5,.5,.5],'custom',  0, [-1.191, -0.461, -1.015, -0.532, 1.358], [-0.202, 0.119, -0.737, 0.639, -2.016]],
+  PROFESSOR: [[.6,.8,.8,.8,.7],'custom', [.7,.7,.8,.9,.7],'custom',  0, [-1.163, -0.295, -1.067, 0.187, 2.213], [-0.852, 0.121, -0.969, -0.841, -2.752]],
+  UNIVERSITY:[[.6,.7,.5,.5,.4],'custom', [.7,1.0,1,1.0,.8],'custom',  0, [-1.174, -0.207, -1.148, -0.136, 2.092], [-1.087, 0.364, -1.123, 0.282, -2.652]],
+  HUMAN:     [[.5,.6,.7,.7,.7],'custom', [.5,.6,.7,.7,.7],'custom',  0, [-1.311, -0.31, -1.004, -0.565, 0.834], [-0.875, 0.277, -0.881, -0.636, -2.749]],
   AI:        [[1,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',    0],
-  IIT:       [[1,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',    0],
-  NPTEL:     [[1,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',    0],
-  DELHI:     [[1,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',    0],
-  PHD:       [[1,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',    0],
-  GOOGLE:    [[1,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',    0],
-  BERKELEY:  [[1,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',    0],
-  WASHINGTON:[[1,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',    0],
-  SEATTLE:   [[1,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',    0],
-  STUART:    [[1,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',    0],
-  RUSSELL:   [[1,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',    0],
-  PETER:     [[1,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',    0],
-  NOVICH:    [[1,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',    0],
-  MOSSAM:    [[1,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',    0],
-  MODI:      [[1,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',    0],
-  NITHYA:    [[1,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',    0],
-
-  // ── Default / fallback ─────────────────────────────────────────
+  MACHINE:   [[.5,.4,.5,.6,.5],'custom', [.4,.5,.5,.5,.4],'custom',  0, [-1.504, -0.469, -0.927, -0.454, 0.869], [-1.134, 0.415, -0.94, -0.442, -2.398]],
+  INTELLIGENT:[[.5,.6,.7,.7,.6],'custom',[.4,.7,.6,.5,.5],'custom',  0, [-1.958, -0.585, -0.708, -0.522, 2.264], [-0.345, 0.11, -0.499, 0.454, -0.99]],
+  YOGA:      [[.6,.6,.7,.7,.6],'custom', [.8,.5,.5,.5,.4],'custom',  0, [-1.371, -0.088, -0.884, -0.144, 0.459], [-0.278, 0.119, -0.566, -0.083, -1.021]],
   DEFAULT:   [[.9,1,1,1,1],'forward',    [.5,.5,.5,.5,.5],'neutral',    0],
 };
 
 // ── Smooth animation system ────────────────────────────────────
 let currentPose = null;
 let targetPose  = null;
-let poseT       = 1; // 0→1 blend
-const BLEND_SPD = 7; // blend speed
+let poseT       = 1;
+const BLEND_SPD = 7;
 
 function setPoseTarget(signName){
   currentPose = targetPose || SIGNS.DEFAULT;
@@ -904,29 +1024,61 @@ function lerpArr(a,b,t){ return a.map((v,i)=>lerp(v,b[i],t)); }
 function applyPoseBlend(t){
   if(!targetPose) return;
   const cur = currentPose || targetPose;
-  const [rF,rP,lF,lP,ht] = targetPose;
-  const [crF,crP,clF,clP,cht] = cur;
+  const [rF,rP,lF,lP,ht, rAng, lAng] = targetPose;
+  const [crF,,clF,,,crAng,clAng] = cur;
 
-  setFingers(rightArm, lerpArr(crF, rF, t));
-  setFingers(leftArm,  lerpArr(clF, lF, t));
+  setFingers(rightArm, lerpArr(crF||rF, rF, t));
+  setFingers(leftArm,  lerpArr(clF||lF, lF, t));
 
-  // Blend arm pose (simplified — just interpolate rotation values)
-  setArmPose(rightArm, rP, 'R');
-  setArmPose(leftArm,  lP, 'L');
+  if(rP === 'custom' && rAng){
+    apply_custom_angles(rightArm, rAng, 1);
+    setFingers(rightArm, lerpArr(crF||rF, rF, t));
+  } else {
+    setArmPose(rightArm, rP, 'R');
+  }
+  if(lP === 'custom' && lAng){
+    apply_custom_angles(leftArm, lAng, -1);
+    setFingers(leftArm, lerpArr(clF||lF, lF, t));
+  } else {
+    setArmPose(leftArm, lP, 'L');
+  }
 
-  // Head tilt
-  head.rotation.x = lerp(cht||0, ht||0, t);
+  head.rotation.x = lerp((cur[4]||0), (ht||0), t);
 }
 
 // ── Idle animation ────────────────────────────────────────────
 let idleT = 0;
 function applyIdle(dt){
   idleT += dt;
-  // Subtle breathing
   avatar.position.y = -0.1 + Math.sin(idleT*0.8)*0.004;
-  // Slight head bob
   if(!isPlaying){
     head.rotation.y = Math.sin(idleT*0.3)*0.05;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LANDING SIGN SEQUENCE
+// Avatar signs HELLO → I → WANT → VIDEO → loop
+// while user is on the landing screen
+// ═══════════════════════════════════════════════════════════════
+let appState = 'landing'; // 'landing' | 'processing' | 'player'
+
+const LANDING_SEQ     = ['HELLO','I','WANT','VIDEO','DEFAULT'];
+const LANDING_LABELS  = ['HELLO','I','WANT','VIDEO','—'];
+const LANDING_DT      = [2.0, 1.4, 1.4, 1.6, 1.0]; // seconds per sign
+let landingIdx        = 0;
+let landingTimer      = 0;
+
+function advanceLandingSeq(dt){
+  landingTimer += dt;
+  if(landingTimer >= LANDING_DT[landingIdx]){
+    landingTimer = 0;
+    landingIdx   = (landingIdx + 1) % LANDING_SEQ.length;
+    const sign   = LANDING_SEQ[landingIdx];
+    const label  = LANDING_LABELS[landingIdx];
+    setPoseTarget(sign);
+    const el = document.getElementById('landing-sign-label');
+    if(el) el.textContent = label;
   }
 }
 
@@ -937,26 +1089,31 @@ let segs=[],signs=[],total=0,elapsed=0,cidx=-1,lseg=-1;
 let isPlaying=false,lts=null,raf=null,spd=1;
 
 function loadFile(e){
-  const f=e.target.files[0];if(!f)return;
+  const f=e.target.files[0]; if(!f)return;
   const r=new FileReader();
-  r.onload=ev=>{try{initData(JSON.parse(ev.target.result));}catch{alert('Load nlp/gloss_output.json');}};
+  r.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      closeJsonModal();
+      transitionToPlayer(data, null);
+    }catch{alert('Invalid JSON — load nlp/gloss_output.json');}
+  };
   r.readAsText(f);
 }
 
 function initData(data){
-  segs=data;signs=[];let t=0;
+  segs=data; signs=[]; let t=0;
   segs.forEach(s=>{
     const toks=(s.gloss||'').split(' ').filter(Boolean);
     const ps=toks.length>0?Math.max((s.end-s.start)/toks.length,0.6):0.8;
     toks.forEach(tok=>{signs.push({sid:s.id,tok,en:s.clean,gl:s.gloss,ts:t,te:t+ps});t+=ps;});
   });
-  total=t;elapsed=0;cidx=-1;lseg=-1;isPlaying=false;
+  total=t; elapsed=0; cidx=-1; lseg=-1; isPlaying=false;
   renderList();
   document.getElementById('tt').textContent=total.toFixed(1)+'s';
   document.getElementById('overlay').textContent=`${segs.length} segments · ${signs.length} signs · ${total.toFixed(0)}s`;
   document.getElementById('btn-play').disabled=false;
-  // Set default sign display
-  setPoseTarget('DEFAULT');poseT=1;
+  setPoseTarget('DEFAULT'); poseT=1;
 }
 
 function renderList(){
@@ -968,7 +1125,7 @@ function renderList(){
 }
 
 function updateSign(idx){
-  if(idx===cidx)return;cidx=idx;
+  if(idx===cidx)return; cidx=idx;
   if(idx<0||idx>=signs.length){
     document.getElementById('sw').textContent='—';
     document.getElementById('se').textContent='—';
@@ -978,24 +1135,19 @@ function updateSign(idx){
   const sg=signs[idx];
   document.getElementById('sw').textContent=sg.tok;
   document.getElementById('se').textContent=`"${sg.en}"`;
-
-  const pose=SIGNS[sg.tok]||SIGNS.DEFAULT;
   document.getElementById('sd').innerHTML=`
     <div class="detail-chip">loc <span>${getLocName(sg.tok)}</span></div>
     <div class="detail-chip">seg <span>${sg.sid}</span></div>`;
 
-  // Highlight segment
   document.querySelectorAll('.seg-item').forEach(e=>e.classList.remove('active'));
   const sel=document.getElementById('si-'+sg.sid);
   if(sel){sel.classList.add('active');sel.scrollIntoView({behavior:'smooth',block:'nearest'});}
-
-  // Animate avatar
   setPoseTarget(sg.tok);
 }
 
 function getLocName(tok){
-  const p=SIGNS[tok];if(!p)return'neutral';
-  return p[1];
+  const p=SIGNS[tok]; if(!p)return'neutral';
+  return p[1]==='custom' ? (p[5]?'custom':'neutral') : p[1];
 }
 
 // ── Render loop ────────────────────────────────────────────────
@@ -1005,6 +1157,9 @@ function animate(ts){
   const dt=Math.min((ts-lastTime)/1000,0.05);
   lastTime=ts;
 
+  // Landing sign sequence
+  if(appState==='landing') advanceLandingSeq(dt);
+
   // Blend pose
   if(poseT<1){
     poseT=Math.min(poseT+dt*BLEND_SPD,1);
@@ -1013,8 +1168,8 @@ function animate(ts){
 
   applyIdle(dt);
 
-  // Playback
-  if(isPlaying){
+  // Playback (player only)
+  if(appState==='player' && isPlaying){
     elapsed=Math.min(elapsed+dt*spd,total);
     const idx=signs.findIndex(s=>elapsed>=s.ts&&elapsed<s.te);
     if(idx!==cidx) updateSign(idx);
@@ -1032,13 +1187,16 @@ function animate(ts){
 
   renderer.render(scene, camera);
 }
+
+// Start with initial landing sign
+setPoseTarget(LANDING_SEQ[0]);
 animate(0);
 
 // ── Controls ───────────────────────────────────────────────────
 function play(){
   if(!signs.length)return;
   if(elapsed>=total){elapsed=0;cidx=-1;lseg=-1;}
-  isPlaying=true;lts=null;
+  isPlaying=true; lts=null;
   document.getElementById('btn-play').disabled=true;
   document.getElementById('btn-pause').disabled=false;
 }
@@ -1048,7 +1206,7 @@ function pause(){
   document.getElementById('btn-pause').disabled=true;
 }
 function reset(){
-  pause();elapsed=0;cidx=-1;lseg=-1;
+  pause(); elapsed=0; cidx=-1; lseg=-1;
   document.getElementById('pb').style.width='0%';
   document.getElementById('tc').textContent='0.0s';
   document.getElementById('sw').textContent='—';
@@ -1056,11 +1214,180 @@ function reset(){
   setPoseTarget('DEFAULT');
   document.getElementById('btn-play').disabled=!signs.length;
 }
-function setSpd(v){spd=parseFloat(v);document.getElementById('sl').textContent=v+'×';}
+function setSpd(v){ spd=parseFloat(v); document.getElementById('sl').textContent=v+'×'; }
 function jumpTo(sid){
-  const s=signs.find(x=>x.sid===sid);if(!s)return;
-  elapsed=s.ts;cidx=-1;
-  if(!isPlaying)updateSign(signs.indexOf(s));
+  const s=signs.find(x=>x.sid===sid); if(!s)return;
+  elapsed=s.ts; cidx=-1;
+  if(!isPlaying) updateSign(signs.indexOf(s));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCREEN MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+
+// Processing screen: step state helpers
+function pStep(id, state){
+  const row  = document.getElementById('pstep-'+id);
+  const icon = document.getElementById('picon-'+id);
+  row.className = 'pstep' + (state==='active'?' active':state==='done'?' done':state==='err'?' err':'');
+  icon.innerHTML =
+    state==='active' ? '<span class="spinning">⟳</span>' :
+    state==='done'   ? '✓' :
+    state==='err'    ? '✗' : '○';
+}
+
+function showProcessingScreen(filename){
+  document.getElementById('proc-filename').textContent = filename;
+  ['upload','audio','asr','gloss'].forEach(id=>pStep(id,'pending'));
+  const ps = document.getElementById('screen-processing');
+  ps.style.display = 'flex';
+  appState = 'processing';
+}
+
+function hideProcessingScreen(){
+  document.getElementById('screen-processing').style.display = 'none';
+}
+
+// Transition: move canvas from landing-avatar-wrap → player-canvas-wrap, show player
+function transitionToPlayer(data, autoplay){
+  appState = 'player';
+  hideProcessingScreen();
+
+  // Move canvas into the player's canvas-wrap
+  const wrap = document.getElementById('player-canvas-wrap');
+  wrap.insertBefore(canvas, wrap.firstChild);
+
+  // Show player screen, fade in
+  const ps = document.getElementById('screen-player');
+  ps.style.display = 'flex';
+  requestAnimationFrame(()=>{
+    ps.style.opacity = '1';
+  });
+
+  // Hide landing (fade out already done if from video flow)
+  document.getElementById('screen-landing').style.display = 'none';
+
+  resize();
+  initData(data);
+  if(autoplay !== false) setTimeout(play, 500);
+}
+
+// "New video" back button → reload page
+function goBack(){
+  window.location.reload();
+}
+
+// JSON modal
+function openJsonModal(){
+  document.getElementById('json-modal').style.display = 'flex';
+}
+function closeJsonModal(){
+  document.getElementById('json-modal').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// VIDEO UPLOAD + PIPELINE
+// ═══════════════════════════════════════════════════════════════
+
+function handleDragOver(e){
+  e.preventDefault();
+  document.getElementById('landing-drop').classList.add('drag-over');
+}
+function handleDragLeave(e){
+  document.getElementById('landing-drop').classList.remove('drag-over');
+}
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('landing-drop').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if(file) processVideoFile(file);
+}
+function processVideoEvent(e){
+  const file = e.target.files[0];
+  if(file) processVideoFile(file);
+}
+
+// ── Server health check ────────────────────────────────────────
+async function checkServerHealth(){
+  const badge = document.getElementById('server-badge');
+  const label = document.getElementById('server-badge-label');
+  try {
+    const res = await fetch('/api/health', {signal: AbortSignal.timeout(4000)});
+    if(res.ok){
+      badge.className = 'server-badge ok';
+      label.textContent = 'Backend ready · app.py running';
+    } else {
+      badge.className = 'server-badge err';
+      label.textContent = 'Backend error (HTTP '+res.status+')';
+    }
+  } catch(e){
+    badge.className = 'server-badge err';
+    label.textContent = 'Backend offline — run: python app.py';
+  }
+}
+checkServerHealth();
+
+// ── Video upload + pipeline ────────────────────────────────────
+async function processVideoFile(file){
+  // Fade out landing
+  const landing = document.getElementById('screen-landing');
+  landing.style.opacity = '0';
+  await new Promise(r=>setTimeout(r, 400));
+  landing.style.display = 'none';
+
+  // Show processing screen, reset error panel
+  showProcessingScreen(file.name);
+  document.getElementById('proc-error').style.display = 'none';
+  pStep('upload','active');
+
+  const form = new FormData();
+  form.append('video', file);
+
+  function showProcError(msg, hint){
+    ['upload','audio','asr','gloss'].forEach(id=>{
+      if(document.getElementById('pstep-'+id).classList.contains('active'))
+        pStep(id,'err');
+    });
+    document.getElementById('proc-error-msg').textContent  = msg;
+    document.getElementById('proc-error-hint').textContent = hint || '';
+    document.getElementById('proc-error').style.display    = 'block';
+    console.error('[ISL]', msg);
+  }
+
+  let data;
+  try {
+    const res = await fetch('/api/process-video', { method:'POST', body:form });
+
+    pStep('upload','done');
+    pStep('audio','active');
+    pStep('asr','active');
+    pStep('gloss','active');
+
+    if(!res.ok){
+      let errMsg = 'Server returned HTTP ' + res.status;
+      try { const j = await res.json(); errMsg = j.error || errMsg; } catch{}
+      showProcError(errMsg, 'Check the terminal where app.py is running for details.');
+      return;
+    }
+
+    data = await res.json();
+    pStep('audio','done');
+    pStep('asr','done');
+    pStep('gloss','done');
+    await new Promise(r=>setTimeout(r, 600));
+
+  } catch(err){
+    const isNetwork = (err instanceof TypeError && err.message.includes('fetch'));
+    showProcError(
+      err.message,
+      isNetwork
+        ? 'Cannot reach the backend. Make sure app.py is running:\n  conda activate base && python app.py'
+        : 'Check the terminal where app.py is running for a traceback.'
+    );
+    return;
+  }
+
+  transitionToPlayer(data, true);
 }
 </script>
 </body>
