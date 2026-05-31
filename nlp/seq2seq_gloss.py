@@ -38,15 +38,16 @@ EOS   = "<EOS>"   # end of sequence
 UNK   = "<UNK>"   # unknown word
 
 # ── Hyperparameters ────────────────────────────────────────────────────────────
-EMB_DIM     = 128    # embedding dimension
+EMB_DIM     = 256    # embedding dimension
 N_HEADS     = 4      # attention heads (EMB_DIM must be divisible by N_HEADS)
-N_LAYERS    = 2      # encoder/decoder layers
-FF_DIM      = 256    # feedforward layer size
-DROPOUT     = 0.1
+N_LAYERS    = 3      # encoder/decoder layers
+FF_DIM      = 512    # feedforward layer size
+DROPOUT     = 0.1    # reverted — 0.3 caused underfitting
 MAX_LEN     = 50     # max sequence length
-BATCH_SIZE  = 32
-EPOCHS      = 50
+BATCH_SIZE  = 64
+EPOCHS      = 150
 LR          = 0.0003
+BEAM_SIZE   = 5      # beam search width
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # VOCABULARY
@@ -232,20 +233,34 @@ class ISLTransformer(nn.Module):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def load_pairs_from_gloss_output() -> list[tuple[str, str]]:
-    """Load English-ISL pairs from existing gloss_output.json (rule-based output)."""
-    if not DATA_PATH.exists():
-        print(f"[SEQ2SEQ] {DATA_PATH} not found — run gloss_converter.py first")
-        return []
+    """Load English-ISL pairs from training_pairs.json + gloss_output.json"""
+    pairs = []
 
-    data   = json.loads(DATA_PATH.read_text())
-    pairs  = []
-    for seg in data:
-        src = seg.get("clean", "").strip()
-        tgt = seg.get("gloss", "").strip()
-        if src and tgt and len(src.split()) >= 2:
-            pairs.append((src, tgt.lower()))
+    # Load from training_pairs.json (Wikipedia scraped data)
+    training_path = BASE_DIR / "training_pairs.json"
+    if training_path.exists():
+        data = json.loads(training_path.read_text())
+        for seg in data:
+            src = seg.get("english", "").strip()
+            tgt = seg.get("gloss", "").strip()
+            # Filter: keep only clean short sentences
+            if src and tgt and 3 <= len(src.split()) <= 12 and len(tgt.split()) >= 2:
+                pairs.append((src, tgt.lower()))
+        print(f"[SEQ2SEQ] Loaded {len(pairs)} pairs from training_pairs.json")
 
-    print(f"[SEQ2SEQ] Loaded {len(pairs)} pairs from gloss_output.json")
+    # Also load from gloss_output.json (lecture data)
+    if DATA_PATH.exists():
+        data = json.loads(DATA_PATH.read_text())
+        lecture_pairs = 0
+        for seg in data:
+            src = seg.get("clean", "").strip()
+            tgt = seg.get("gloss", "").strip()
+            if src and tgt and len(src.split()) >= 2:
+                pairs.append((src, tgt.lower()))
+                lecture_pairs += 1
+        print(f"[SEQ2SEQ] Added {lecture_pairs} pairs from gloss_output.json")
+
+    print(f"[SEQ2SEQ] Total: {len(pairs)} pairs")
     return pairs
 
 
@@ -423,32 +438,65 @@ def load_model():
     return model, src_vocab, tgt_vocab
 
 
-def translate(sentence: str, model=None, src_vocab=None, tgt_vocab=None) -> str:
-    """Translate one English sentence to ISL gloss using the trained model."""
+def translate(sentence: str, model=None, src_vocab=None, tgt_vocab=None, beam_size=BEAM_SIZE) -> str:
+    """Translate one English sentence to ISL gloss using beam search."""
     if model is None:
         model, src_vocab, tgt_vocab = load_model()
 
     device = next(model.parameters()).device
+    model.eval()
 
     # Encode source
-    src_ids = src_vocab.encode(sentence.lower())
+    src_ids    = src_vocab.encode(sentence.lower())
     src_tensor = torch.tensor(src_ids, dtype=torch.long).unsqueeze(0).to(device)
 
-    # Greedy decode
     sos_idx = tgt_vocab.word2idx[SOS]
     eos_idx = tgt_vocab.word2idx[EOS]
 
-    tgt_ids = [sos_idx]
+    # Each beam: (log_prob, token_ids)
+    beams     = [(0.0, [sos_idx])]
+    completed = []
+
     with torch.no_grad():
         for _ in range(MAX_LEN):
-            tgt_tensor = torch.tensor(tgt_ids, dtype=torch.long).unsqueeze(0).to(device)
-            logits     = model(src_tensor, tgt_tensor)
-            next_id    = logits[0, -1, :].argmax().item()
-            if next_id == eos_idx:
-                break
-            tgt_ids.append(next_id)
+            new_beams = []
 
-    gloss = tgt_vocab.decode(tgt_ids[1:])  # skip SOS
+            for log_prob, token_ids in beams:
+                # If this beam already ended, keep it
+                if token_ids[-1] == eos_idx:
+                    completed.append((log_prob, token_ids))
+                    continue
+
+                tgt_tensor = torch.tensor(token_ids, dtype=torch.long).unsqueeze(0).to(device)
+                logits     = model(src_tensor, tgt_tensor)
+
+                # Get log probabilities for next token
+                log_probs  = torch.log_softmax(logits[0, -1, :], dim=-1)
+
+                # Take top beam_size candidates
+                top_probs, top_ids = log_probs.topk(beam_size)
+
+                for prob, idx in zip(top_probs.tolist(), top_ids.tolist()):
+                    new_beams.append((log_prob + prob, token_ids + [idx]))
+
+            if not new_beams:
+                break
+
+            # Keep top beam_size beams by score, normalized by length
+            new_beams.sort(key=lambda x: x[0] / len(x[1]), reverse=True)
+            beams = new_beams[:beam_size]
+
+            # Stop if all beams ended
+            if all(ids[-1] == eos_idx for _, ids in beams):
+                completed.extend(beams)
+                break
+
+    # Pick best completed sequence, fall back to best beam
+    all_candidates = completed if completed else beams
+    all_candidates.sort(key=lambda x: x[0] / len(x[1]), reverse=True)
+    best_ids = all_candidates[0][1]
+
+    gloss = tgt_vocab.decode(best_ids[1:])  # skip SOS
     return gloss.upper()
 
 
