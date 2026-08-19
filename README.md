@@ -259,9 +259,13 @@ Built under **Prof. PVM Rao**, Department of Design & Department of Mechanical E
 ## Authors
 
 **Vaishnavi Rai**  
-B.Tech CSE, IIT Delhi (3rd year)  
+B.Tech CSE, IIT Delhi (4th year)  
 [cs1230657@iitd.ac.in](mailto:cs1230657@iitd.ac.in)
 
 **Avani Komalkar**  
-B.Tech CSE, IIT Delhi (3rd year)  
+B.Tech CSE, IIT Delhi (4th year)  
 [cs5230325@iitd.ac.in](mailto:cs5230325@iitd.ac.in)
+
+**Sanika Brahmankar**  
+B.Tech CSE, IIT Delhi (4th year)  
+[cs5230730@iitd.ac.in](mailto:cs5230730@iitd.ac.in)
